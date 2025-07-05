@@ -474,10 +474,27 @@ const Chart: React.FC<ChartProps> = ({
     svg.on("wheel.zoom", null).on("mousedown.zoom", null).on("touchstart.zoom", null);
     // Use buffered domain for zoom
     const [minDate, maxDate] = initialXDomain;
-    const x = d3.scaleTime().domain([minDate, maxDate]).range([150, Math.max(600, svgRef.current.getBoundingClientRect().width - 48) - 30]);
-    // Set up zoom
+    const chartLeft = 150; // margin.left
+    const chartRight = Math.max(600, svgRef.current.getBoundingClientRect().width - 48) - 30; // width - margin.right
+    const chartTop = 30; // margin.top
+    const chartBottom = 580 - 55; // height - margin.bottom
+    const x = d3.scaleTime().domain([minDate, maxDate]).range([chartLeft, chartRight]);
+    // Set up zoom, restrict to chart area only
     const zoom = d3.zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.5, 10])
+      .translateExtent([[chartLeft, chartTop], [chartRight, chartBottom]])
+      .extent([[chartLeft, chartTop], [chartRight, chartBottom]])
+      .filter((event) => {
+        // Only allow zoom if mouse is inside the chart area (not on y-axis labels)
+        if (!svgRef.current) return false;
+        const { offsetX, offsetY } = event;
+        return (
+          offsetX >= chartLeft &&
+          offsetX <= chartRight &&
+          offsetY >= chartTop &&
+          offsetY <= chartBottom
+        );
+      })
       .on("zoom", (event) => {
         // Only X axis
         const t = event.transform;
