@@ -125,6 +125,11 @@ function App() {
     return [Math.min(...vals), Math.max(...vals)];
   }, [transactions]);
 
+  // Handler for changing active account from TreeGraph
+  const handleActiveAccountChange = (accountId: string) => {
+    setActiveAccounts([accountId]);
+  };
+
   return (
     <div className="app-root">
       <header className="app-header">
@@ -184,6 +189,7 @@ function App() {
             activeAccount={activeAccounts[0]}
             minAmount={filters.amountRange?.[0] || minAmount}
             maxAmount={filters.amountRange?.[1] || maxAmount}
+            onActiveAccountChange={handleActiveAccountChange}
           />
         ) : (
           <TimeFlow

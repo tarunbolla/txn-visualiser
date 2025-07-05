@@ -9,6 +9,7 @@ interface TreeGraphProps {
   activeAccount: string;
   minAmount: number;
   maxAmount: number;
+  onActiveAccountChange?: (accountId: string) => void;
 }
 
 interface TreeNode {
@@ -95,9 +96,13 @@ function buildFullTree(transactions: Transaction[], accountId: string): TreeNode
   };
 }
 
-const NODE_RADIUS = 4;
-
-const TreeGraph: React.FC<TreeGraphProps> = ({ transactions, activeAccount, minAmount, maxAmount }) => {
+const TreeGraph: React.FC<TreeGraphProps> = ({ 
+  transactions, 
+  activeAccount, 
+  minAmount, 
+  maxAmount, 
+  onActiveAccountChange 
+}) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null);
@@ -110,6 +115,15 @@ const TreeGraph: React.FC<TreeGraphProps> = ({ transactions, activeAccount, minA
     direction: "in" | "out" | "root";
     parentId?: string;
     transactions: Transaction[];
+  } | null>(null);
+
+  // State for context menu
+  const [contextMenu, setContextMenu] = useState<{
+    visible: boolean;
+    x: number;
+    y: number;
+    accountId: string;
+    accountName: string;
   } | null>(null);
 
   // Function to get transactions for a specific node based on its parent relationship
@@ -201,6 +215,18 @@ const TreeGraph: React.FC<TreeGraphProps> = ({ transactions, activeAccount, minA
       );
     }
   }, [activeAccount]);
+
+  // Handle clicks outside to close context menu
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setContextMenu(null);
+    };
+
+    if (contextMenu?.visible) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [contextMenu?.visible]);
 
   // Update content when filters change
   useEffect(() => {
@@ -459,6 +485,20 @@ const TreeGraph: React.FC<TreeGraphProps> = ({ transactions, activeAccount, minA
         
         // Use the node data which now includes parent information
         handleNodeClick(d.accountId, d.direction, d.parentId, filteredTx);
+      })
+      .on("contextmenu", function(event, d) {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        // Show context menu for account focusing
+        const accountName = accounts.find(a => a.id === d.accountId)?.name || d.accountId;
+        setContextMenu({
+          visible: true,
+          x: event.pageX,
+          y: event.pageY,
+          accountId: d.accountId,
+          accountName: accountName
+        });
       });
     
     nodes.exit().remove();
@@ -487,8 +527,28 @@ const TreeGraph: React.FC<TreeGraphProps> = ({ transactions, activeAccount, minA
     texts.exit().remove();
   }, [transactions, minAmount, maxAmount, selectedNode, activeAccount]); // Add selectedNode to update highlighting
 
+  // Handle click outside to close context menu
+  useEffect(() => {
+    const handleClickOutside = () => {
+      if (contextMenu?.visible) {
+        setContextMenu(null);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [contextMenu?.visible]);
+
+  // Handle context menu actions
+  const handleFocusAccount = (accountId: string) => {
+    if (onActiveAccountChange) {
+      onActiveAccountChange(accountId);
+    }
+    setContextMenu(null);
+  };
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "16px", position: "relative" }}>
       <div 
         ref={containerRef}
         style={{ 
@@ -505,6 +565,47 @@ const TreeGraph: React.FC<TreeGraphProps> = ({ transactions, activeAccount, minA
       >
         <svg ref={svgRef} style={{ cursor: "grab" }} />
       </div>
+
+      {/* Context menu */}
+      {contextMenu && (
+        <div
+          style={{
+            position: "fixed",
+            left: contextMenu.x,
+            top: contextMenu.y,
+            background: "white",
+            border: "1px solid #e5e7eb",
+            borderRadius: "6px",
+            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
+            zIndex: 1000,
+            minWidth: "160px",
+            padding: "4px 0"
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            style={{
+              width: "100%",
+              padding: "8px 12px",
+              border: "none",
+              background: "transparent",
+              textAlign: "left",
+              cursor: "pointer",
+              fontSize: "14px",
+              color: "#333"
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "#f3f4f6";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "transparent";
+            }}
+            onClick={() => handleFocusAccount(contextMenu.accountId)}
+          >
+            Re-centre on {contextMenu.accountName}
+          </button>
+        </div>
+      )}
       
       {selectedNode && (
         <div className="table-section">
