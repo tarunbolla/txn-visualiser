@@ -24,7 +24,7 @@ import * as d3 from "d3";
 
 export const parseDate = d3.timeParse("%Y-%m-%d");
 export const formatDate = d3.timeFormat("%d/%m/%Y");
-export let formatXAxisDate = d3.timeFormat("%d/%m");
+export const formatXAxisDate = d3.timeFormat("%d/%m");
 export const formatCurrency = (value: number) => {
   if (value === undefined || value === null || isNaN(value)) return "N/A";
   return Number(value).toLocaleString("en-AU", {

@@ -23,6 +23,18 @@ const Chart: React.FC<ChartProps> = ({
   // Store the current x domain for zooming
   const [xDomain, setXDomain] = useState<[Date, Date] | null>(null);
 
+  // Store the initial x domain for reset
+  const initialXDomain = React.useMemo(() => {
+    // No date filter needed, just use all transactions
+    if (!transactions.length) return [new Date(), new Date()] as [Date, Date];
+    const minDate = d3.min(transactions, d => d.parsedDate!)!;
+    const maxDate = d3.max(transactions, d => d.parsedDate!)!;
+    // Add buffer space of 2 days on each side
+    const bufferedMin = d3.timeDay.offset(minDate, -2);
+    const bufferedMax = d3.timeDay.offset(maxDate, 2);
+    return [bufferedMin, bufferedMax] as [Date, Date];
+  }, [transactions]);
+
   // Use a ref to hold the latest callbacks, avoiding stale closures in D3
   const callbacks = useRef({ onShowTooltip, onHideTooltip, onToggleFlag });
   useEffect(() => {
@@ -56,8 +68,10 @@ const Chart: React.FC<ChartProps> = ({
 
     // X: time scale
     const dates = transactions.map((d) => d.parsedDate!);
-    const minDate = d3.min(dates)!;
-    const maxDate = d3.max(dates)!;
+    // Use padded domain for default view
+    const [paddedMin, paddedMax] = initialXDomain;
+    const minDate = paddedMin;
+    const maxDate = paddedMax;
     // Use zoomed domain if present
     const xScale = d3
       .scaleTime()
@@ -162,18 +176,18 @@ const Chart: React.FC<ChartProps> = ({
       .attr("font-size", 14)
       .attr("fill", "#374151");
 
-    // Draw x-axis (dates) at the very bottom
+    // Draw x-axis (dates) at the bottom of the chart area
     svg
       .append("g")
       .attr("class", "x-axis")
       .attr(
         "transform",
-        `translate(0,${height - margin.bottom + 25})` // Move x-axis to bottom, visible
+        `translate(0,${height - margin.bottom})` // Move x-axis to bottom of chart area
       )
       .call(
         d3.axisBottom(xScale)
-          .ticks(6)
-          .tickFormat((domainValue, _i) => {
+          .ticks(8)
+          .tickFormat((domainValue) => {
             if (domainValue instanceof Date) {
               return d3.timeFormat("%b %Y")(domainValue);
             }
@@ -391,7 +405,7 @@ const Chart: React.FC<ChartProps> = ({
     return () => {
       resizeObserver.disconnect();
     };
-  }, [transactions, accounts, xDomain]); // Dependencies are now only data-related
+  }, [transactions, accounts, xDomain, initialXDomain]); // Added initialXDomain to dependencies
 
   // D3 zoom for X axis only
   useEffect(() => {
@@ -399,30 +413,55 @@ const Chart: React.FC<ChartProps> = ({
     const svg = d3.select(svgRef.current);
     // Remove any previous zoom listeners
     svg.on("wheel.zoom", null).on("mousedown.zoom", null).on("touchstart.zoom", null);
-    // Get initial domain
-    const dates = transactions.map((d) => d.parsedDate!);
-    const minDate = d3.min(dates)!;
-    const maxDate = d3.max(dates)!;
+    // Use buffered domain for zoom
+    const [minDate, maxDate] = initialXDomain;
     const x = d3.scaleTime().domain([minDate, maxDate]).range([150, Math.max(600, svgRef.current.getBoundingClientRect().width - 48) - 30]);
     // Set up zoom
     const zoom = d3.zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.5, 10])
-      .translateExtent([[x.range()[0], 0], [x.range()[1], 0]])
       .on("zoom", (event) => {
         // Only X axis
         const t = event.transform;
         const zx = t.rescaleX(x);
         setXDomain(zx.domain() as [Date, Date]);
       });
-    svg.call(zoom as any);
+    svg.call(zoom as d3.ZoomBehavior<SVGSVGElement, unknown>);
+    // Expose zoom and svg for reset
+    (window as unknown as { __chartZoom?: d3.ZoomBehavior<SVGSVGElement, unknown>; __chartSvg?: d3.Selection<SVGSVGElement, unknown, null, undefined>; }).__chartZoom = zoom;
+    (window as unknown as { __chartZoom?: d3.ZoomBehavior<SVGSVGElement, unknown>; __chartSvg?: d3.Selection<SVGSVGElement, unknown, null, undefined>; }).__chartSvg = svg;
     // Clean up
     return () => {
       svg.on("wheel.zoom", null).on("mousedown.zoom", null).on("touchstart.zoom", null);
     };
-  }, [transactions]);
+  }, [transactions, initialXDomain]);
 
   return (
-    <div className="chart-container" ref={containerRef}>
+    <div className="chart-container" ref={containerRef} style={{ position: 'relative' }}>
+      {/* Chart controls top right */}
+      <div style={{ position: 'absolute', top: 8, right: 16, zIndex: 2 }}>
+        <button
+          style={{
+            background: '#f3f4f6',
+            border: '1px solid #d1d5db',
+            borderRadius: 4,
+            padding: '4px 12px',
+            fontSize: 13,
+            color: '#374151',
+            cursor: 'pointer',
+            boxShadow: '0 1px 2px rgba(0,0,0,0.03)'
+          }}
+          onClick={() => {
+            setXDomain(null);
+            // Also reset D3 zoom transform
+            if ((window as any).__chartZoom && (window as any).__chartSvg) {
+              (window as any).__chartSvg.call((window as any).__chartZoom.transform, d3.zoomIdentity);
+            }
+          }}
+          title="Reset zoom and pan"
+        >
+          Reset View
+        </button>
+      </div>
       <svg ref={svgRef} />
     </div>
   );

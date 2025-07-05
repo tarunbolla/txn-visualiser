@@ -6,9 +6,8 @@ import Tooltip from "./components/Tooltip";
 import { rawTransactionsData, accounts, parseDate } from "./data";
 import "./App.css";
 
-// Add amount and flow filter support to Filters type
+// Remove dateRange from Filters type
 interface Filters {
-  dateRange: { from: Date | null; to: Date | null };
   amountRange?: [number, number];
   flowRange?: [number, number];
 }
@@ -41,9 +40,7 @@ function App() {
   };
 
   // Main state
-  const [filters, setFilters] = useState<Filters>({
-    dateRange: { from: null, to: null },
-  });
+  const [filters, setFilters] = useState<Filters>({});
   const [page, setPage] = useState(1);
 
   const [transactions, setTransactions] = useState(() =>
@@ -76,8 +73,6 @@ function App() {
   // Filtered transactions (add amount and flow filters)
   const filteredTransactions = useMemo(() => {
     return transactions.filter((tx) => {
-      if (filters.dateRange.from && tx.parsedDate && tx.parsedDate < filters.dateRange.from) return false;
-      if (filters.dateRange.to && tx.parsedDate && tx.parsedDate > filters.dateRange.to) return false;
       if (filters.amountRange && (tx.amount < filters.amountRange[0] || tx.amount > filters.amountRange[1])) return false;
       if (filters.flowRange) {
         // Only show tx if both from/to accounts are in flow range
