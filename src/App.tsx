@@ -133,7 +133,7 @@ function App() {
   return (
     <div className="app-root">
       <header className="app-header">
-        <h1 className="app-title">Transaction Visualizer</h1>
+        <h1 className="app-title">Transaction Visualiser</h1>
       </header>
       
       <div className="controls-panel">
