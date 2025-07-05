@@ -243,18 +243,29 @@ const TimeFlow: React.FC<TimeFlowProps> = ({
         if (!fromLane || !toLane) return "";
         
         const x1 = timeScale(d.date);
-        const x2 = x1 + 80; // Flow band length
+        const x2 = x1 + 120; // Longer flow bands for better curves
         const y1 = fromLane.y;
         const y2 = toLane.y;
         const width = flowWidthScale(d.amount);
         
-        // Create simple angled band path
-        if (y1 === y2) {
-          // Same account lane - horizontal band
-          return `M ${x1} ${y1 - width/2} L ${x2} ${y2 - width/2} L ${x2} ${y2 + width/2} L ${x1} ${y1 + width/2} Z`;
+        // Create smooth continuous path with minimal deviation for easy tracing
+        if (Math.abs(y1 - y2) < 5) {
+          // Same or very close account lanes - straight horizontal flow
+          return `M ${x1},${y1 - width/2} 
+                  L ${x2},${y2 - width/2}
+                  L ${x2},${y2 + width/2}
+                  L ${x1},${y1 + width/2} Z`;
         } else {
-          // Different lanes - angled band
-          return `M ${x1} ${y1 - width/2} L ${x2} ${y2 - width/2} L ${x2} ${y2 + width/2} L ${x1} ${y1 + width/2} Z`;
+          // Different lanes - gentle tapered flow that's easy to follow
+          const midX = x1 + (x2 - x1) * 0.5; // Midpoint for transition
+          
+          // Create a gentle tapered path that maintains visual continuity
+          return `M ${x1},${y1 - width/2} 
+                  L ${midX},${y1 - width/2}
+                  L ${x2},${y2 - width/2}
+                  L ${x2},${y2 + width/2}
+                  L ${midX},${y1 + width/2}
+                  L ${x1},${y1 + width/2} Z`;
         }
       })
       .attr("fill", d => {
@@ -264,8 +275,6 @@ const TimeFlow: React.FC<TimeFlowProps> = ({
         return "#3b82f6"; // Low amounts - blue
       })
       .attr("fill-opacity", 0.7)
-      .attr("stroke", "#374151")
-      .attr("stroke-width", 0.5)
       .style("cursor", "pointer")
       .on("click", function(event, d) {
         event.stopPropagation();
