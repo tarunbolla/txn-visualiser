@@ -4,6 +4,7 @@ import Controls from "./components/Controls";
 import TransactionsTable from "./components/TransactionsTable";
 import Tooltip from "./components/Tooltip";
 import TreeGraph from "./components/TreeGraph";
+import TimeFlow from "./components/TimeFlow";
 import { rawTransactionsData, accounts, parseDate } from "./data";
 import type { Transaction } from "./data";
 import "./App.css";
@@ -44,7 +45,7 @@ function App() {
   // Main state
   const [filters, setFilters] = useState<Filters>({});
   const [page, setPage] = useState(1);
-  const [visualization, setVisualization] = useState<'flow' | 'tree'>("flow");
+  const [visualization, setVisualization] = useState<'flow' | 'tree' | 'timeflow'>("flow");
 
   const [transactions, setTransactions] = useState(() =>
     rawTransactionsData.map((tx) => ({
@@ -149,11 +150,12 @@ function App() {
             <select
               id="viz-mode"
               value={visualization}
-              onChange={e => setVisualization(e.target.value as 'flow' | 'tree')}
+              onChange={e => setVisualization(e.target.value as 'flow' | 'tree' | 'timeflow')}
               style={{ fontSize: 14, padding: '2px 8px' }}
             >
               <option value="flow">Flow Chart</option>
               <option value="tree">Tree Graph</option>
+              <option value="timeflow">Time Flow</option>
             </select>
           </div>
         </div>
@@ -176,12 +178,20 @@ function App() {
             activeAccounts={activeAccounts}
             onAddActiveAccount={(id) => setActiveAccounts((prev) => prev.includes(id) ? prev : [...prev, id])}
           />
-        ) : (
+        ) : visualization === 'tree' ? (
           <TreeGraph
             transactions={filteredTransactions}
             activeAccount={activeAccounts[0]}
             minAmount={filters.amountRange?.[0] || minAmount}
             maxAmount={filters.amountRange?.[1] || maxAmount}
+          />
+        ) : (
+          <TimeFlow
+            transactions={filteredTransactions}
+            allTransactions={transactions}
+            minAmount={filters.amountRange?.[0] || minAmount}
+            maxAmount={filters.amountRange?.[1] || maxAmount}
+            onToggleFlag={handleToggleFlag}
           />
         )}
       </div>
