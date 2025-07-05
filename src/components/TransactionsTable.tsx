@@ -30,13 +30,13 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
           <tr>
             <th style={{ width: '20px' }}></th>
             <th>Date</th>
-            <th>From</th>
-            <th>From #</th>
-            <th>To</th>
-            <th>To #</th>
-            <th>Amount</th>
-            <th>Type</th>
-            <th>Description</th>
+            <th>Sender Name</th>
+            <th>Sender Account #</th>
+            <th>Beneficiary Name</th>
+            <th>Beneficiary Account #</th>
+            <th style={{ textAlign: 'right' }}>Amount (₹)</th>
+            <th>Transaction Type</th>
+            <th>Transaction Description</th>
           </tr>
         </thead>
         <tbody>
@@ -69,7 +69,7 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
                 <td>{tx.from}</td>
                 <td>{getAccountName(tx.to)}</td>
                 <td>{tx.to}</td>
-                <td>{formatCurrency(tx.amount)}</td>
+                <td style={{ textAlign: 'right' }}>{formatCurrency(tx.amount)}</td>
                 <td>{tx.type}</td>
                 <td>{tx.description}</td>
               </tr>
