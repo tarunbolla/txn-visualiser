@@ -383,6 +383,9 @@ const Chart: React.FC<ChartProps> = ({
             <div style={{ fontWeight: 'bold', marginBottom: '6px', fontSize: '13px', color: '#fff' }}>
               {d.description || "Transaction"}
             </div>
+            <div style={{ marginBottom: '2px', fontFamily: 'monospace', fontSize: '11px', color: '#888' }}>
+              <strong>ID:</strong> {d.id}
+            </div>
             <div style={{ marginBottom: '3px' }}>
               <strong>Amount:</strong> {formatCurrencyShort(d.amount)}
             </div>
