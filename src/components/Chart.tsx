@@ -177,6 +177,23 @@ const Chart: React.FC<ChartProps> = ({
       .attr("fill", "#374151");
 
     // Draw x-axis (dates) at the bottom of the chart area
+    // Dynamically choose tick interval based on zoom level
+    const xDomainArr = xScale.domain();
+    const xStart = xDomainArr[0];
+    const xEnd = xDomainArr[1];
+    const daysSpan = (xEnd.getTime() - xStart.getTime()) / (1000 * 60 * 60 * 24);
+    let xTickInterval;
+    let xTickFormat;
+    if (daysSpan > 60) {
+      xTickInterval = d3.timeMonth.every(1);
+      xTickFormat = d3.timeFormat("%b %Y");
+    } else if (daysSpan > 20) {
+      xTickInterval = d3.timeDay.every(10);
+      xTickFormat = d3.timeFormat("%d %b");
+    } else {
+      xTickInterval = d3.timeDay.every(1);
+      xTickFormat = d3.timeFormat("%d %b");
+    }
     svg
       .append("g")
       .attr("class", "x-axis")
@@ -186,10 +203,10 @@ const Chart: React.FC<ChartProps> = ({
       )
       .call(
         d3.axisBottom(xScale)
-          .ticks(8)
+          .ticks(xTickInterval)
           .tickFormat((domainValue) => {
             if (domainValue instanceof Date) {
-              return d3.timeFormat("%b %Y")(domainValue);
+              return xTickFormat(domainValue);
             }
             return String(domainValue);
           })
@@ -198,28 +215,41 @@ const Chart: React.FC<ChartProps> = ({
       .attr("font-size", 12)
       .attr("fill", "#374151");
 
-    // For spacing: group txns by date only to prevent overlap
-    const txByDate = d3.rollups(
-      transactions,
-      (v) => v,
-      (d) => d.date
-    );
-    // Helper: get offset for each txn in its date group
-    const txOffsetMap = new Map<string, number>();
-    txByDate.forEach((dateGroup) => {
-      const txnsOnDate = dateGroup[1];
-      txnsOnDate.forEach((txn, i) => {
-        txOffsetMap.set(txn.id, i);
-      });
-    });
-    const arrowSpacing = 15; // px between arrows on same date (increased for better separation)
-
     // Only render transactions within the current xScale domain
-    const [xStart, xEnd] = xScale.domain();
     const visibleTransactions: Transaction[] = transactions.filter((t: Transaction) => {
       const d = t.parsedDate!;
       return d >= xStart && d <= xEnd;
     });
+
+    // For horizontal spacing: group txns by date only
+    const txByDate = d3.rollups(
+      visibleTransactions,
+      (v) => v,
+      (d) => d.date
+    );
+    // Map: txn id -> index in its date group
+    const txOffsetMap = new Map<string, number>();
+    txByDate.forEach(([_, txns]) => {
+      txns.forEach((txn, i) => {
+        txOffsetMap.set(txn.id, i);
+      });
+    });
+    const arrowSpacing = 15; // px between arrows on same date
+
+    // For label overlap: group txns by date, from, to
+    const txByDateFromTo = d3.rollups(
+      visibleTransactions,
+      (v) => v,
+      (d) => `${d.date}|${d.from}|${d.to}`
+    );
+    // Map: txn id -> index in its group
+    const txLabelIndexMap = new Map<string, number>();
+    txByDateFromTo.forEach(([_, txns]) => {
+      txns.forEach((txn, i) => {
+        txLabelIndexMap.set(txn.id, i);
+      });
+    });
+    const labelPositions = [0.2, 0.4, 0.6, 0.8]; // 20%, 40%, 60%, 80%
 
     // Draw arrows for transactions
     const arrowsGroup = svg
@@ -241,12 +271,17 @@ const Chart: React.FC<ChartProps> = ({
 
         const fromY = yScale(d.from)! + yScale.bandwidth() / 2;
         const toY = yScale(d.to)! + yScale.bandwidth() / 2;
+        // Restore X offset for same-date transactions
         const baseX = xScale(d.parsedDate!);
-        const txnsOnSameDate = visibleTransactions.filter((tx: Transaction) => tx.date === d.date);
+        const txnsOnSameDate = txByDate.find(([date]) => date === d.date)?.[1] || [];
         const groupSize = txnsOnSameDate.length;
         const myIndex = txOffsetMap.get(d.id) || 0;
         const offset = (myIndex - (groupSize - 1) / 2) * arrowSpacing;
         const x = baseX + offset;
+        // Use randomized label position along the arrow
+        const labelIndex = txLabelIndexMap.get(d.id) || 0;
+        const labelPct = labelPositions[labelIndex % labelPositions.length];
+        const labelY = fromY + (toY - fromY) * labelPct;
         const arrowColor = config.transactionTypeColors[d.type as keyof typeof config.transactionTypeColors] || config.defaultArrowColor;
         const markerType = d.type || "Other";
         const arrowMarkerId = config.transactionTypeColors[markerType as keyof typeof config.transactionTypeColors] 
@@ -300,15 +335,14 @@ const Chart: React.FC<ChartProps> = ({
           .attr("marker-end", `url(#${arrowMarkerId})`)
           .attr("opacity", 0.85);
 
-        // Add amount label with colored background at center of the arrow
-        const midY = (fromY + toY) / 2;
+        // Add amount label with colored background at randomized position along the arrow
         const labelGroup = group.append("g").attr("class", "amount-label");
 
         const labelText = formatCurrencyShort(d.amount);
         const amountTextElement = labelGroup
           .append("text")
           .attr("x", x)
-          .attr("y", midY)
+          .attr("y", labelY)
           .attr("text-anchor", "middle")
           .attr("dominant-baseline", "middle")
           .attr("font-size", 10)
@@ -333,8 +367,8 @@ const Chart: React.FC<ChartProps> = ({
         if (d.isFlagged) {
           labelGroup
             .append("text")
-            .attr("x", amountBBox.x + amountBBox.width + 2) // Move flag closer to label
-            .attr("y", midY)
+            .attr("x", amountBBox.x + amountBBox.width + 2)
+            .attr("y", labelY)
             .attr("text-anchor", "start")
             .attr("dominant-baseline", "middle")
             .attr("font-size", 14)
@@ -350,7 +384,7 @@ const Chart: React.FC<ChartProps> = ({
           })
           .on("mouseenter", function () {
             group.select("line").attr("opacity", 1);
-            const tooltipX = svgRect.left + x;
+            const tooltipX = svgRect.left + baseX;
             const tooltipY = svgRect.top + Math.min(fromY, toY);
             callbacks.current.onShowTooltip(tooltipContent, tooltipX, tooltipY);
           })
