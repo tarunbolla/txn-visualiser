@@ -113,6 +113,11 @@ function App() {
             filters={filters}
             accounts={accounts}
             onFilterChange={handleFilterChange}
+            onResetFlags={() => {
+              setTransactions(currentTransactions =>
+                currentTransactions.map(tx => ({ ...tx, isFlagged: false }))
+              );
+            }}
             transactions={transactions}
             accountFlows={accountFlows}
           />
@@ -126,7 +131,12 @@ function App() {
           onShowTooltip={handleShowTooltip}
           onHideTooltip={handleHideTooltip}
           onToggleFlag={handleToggleFlag}
-          onVisibleTransactionsChange={setVisibleTransactions} // NEW: sync visible txns
+          onVisibleTransactionsChange={setVisibleTransactions}
+          onResetFlags={() => {
+            setTransactions(currentTransactions =>
+              currentTransactions.map(tx => ({ ...tx, isFlagged: false }))
+            );
+          }}
         />
       </div>
 

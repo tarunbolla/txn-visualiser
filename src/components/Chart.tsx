@@ -10,6 +10,7 @@ export interface ChartProps {
   onHideTooltip: () => void;
   onToggleFlag: (id: string) => void;
   onVisibleTransactionsChange?: (visible: Transaction[]) => void; // NEW PROP
+  onResetFlags?: () => void; // Add this prop
 }
 
 const Chart: React.FC<ChartProps> = ({ 
@@ -19,6 +20,7 @@ const Chart: React.FC<ChartProps> = ({
   onHideTooltip,
   onToggleFlag,
   onVisibleTransactionsChange,
+  onResetFlags,
 }) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -514,7 +516,7 @@ const Chart: React.FC<ChartProps> = ({
   return (
     <div className="chart-container" ref={containerRef} style={{ position: 'relative' }}>
       {/* Chart controls top right */}
-      <div style={{ position: 'absolute', top: 8, right: 16, zIndex: 2 }}>
+      <div style={{ position: 'absolute', top: 8, right: 16, zIndex: 2, display: 'flex', gap: 8 }}>
         <button
           style={{
             background: '#f3f4f6',
@@ -536,6 +538,23 @@ const Chart: React.FC<ChartProps> = ({
           title="Reset zoom and pan"
         >
           Reset View
+        </button>
+        <button
+          style={{
+            background: '#f3f4f6',
+            border: '1px solid #d1d5db',
+            borderRadius: 4,
+            padding: '4px 12px',
+            fontSize: 13,
+            color: '#374151',
+            cursor: 'pointer',
+            boxShadow: '0 1px 2px rgba(0,0,0,0.03)'
+          }}
+          onClick={onResetFlags}
+          title="Clear all transaction flags"
+          disabled={!onResetFlags}
+        >
+          Reset Flags
         </button>
       </div>
       <svg ref={svgRef} />

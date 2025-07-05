@@ -12,11 +12,12 @@ export interface ControlsProps {
   filters: Filters;
   accounts: Account[];
   onFilterChange: (newFilters: Partial<Filters>) => void;
+  onResetFlags: () => void;
   transactions?: Array<{ amount: number; parsedDate?: Date }> ;
   accountFlows?: Record<string, number>;
 }
 
-const Controls: React.FC<ControlsProps> = ({ filters, onFilterChange, transactions = [], accountFlows = {} }) => {
+const Controls: React.FC<ControlsProps> = ({ filters, onFilterChange, onResetFlags, transactions = [], accountFlows = {} }) => {
   // Compute min/max for amount slider
   const [minAmount, maxAmount] = React.useMemo(() => {
     if (!transactions.length) return [0, 10000];
@@ -55,6 +56,8 @@ const Controls: React.FC<ControlsProps> = ({ filters, onFilterChange, transactio
         label="Account Flow"
         formatValue={(val) => `$${Math.round(val).toLocaleString()}`}
       />
+
+      {/* Control buttons removed as per user request */}
     </>
   );
 };
