@@ -63,30 +63,36 @@ function App() {
     );
   };
 
-  // Compute account flows for flow filter
-  const accountFlows = useMemo(() => {
-    const flows: Record<string, number> = {};
-    accounts.forEach(acc => { flows[acc.id] = 0; });
+  // Compute pairwise flows for flow filter
+  const pairFlows = useMemo(() => {
+    const map = new Map<string, number>();
     transactions.forEach(tx => {
-      flows[tx.from] = (flows[tx.from] || 0) - tx.amount;
-      flows[tx.to] = (flows[tx.to] || 0) + tx.amount;
+      const key = [tx.from, tx.to].sort().join("|");
+      map.set(key, (map.get(key) || 0) + Math.abs(tx.amount));
     });
-    return flows;
+    return map;
   }, [transactions]);
+
+  // Convert pairFlows to object for Controls
+  const pairFlowsObj = useMemo(() => {
+    const obj: Record<string, number> = {};
+    pairFlows.forEach((v, k) => { obj[k] = v; });
+    return obj;
+  }, [pairFlows]);
 
   // Filtered transactions (add amount and flow filters)
   const filteredTransactions = useMemo(() => {
     return transactions.filter((tx) => {
       if (filters.amountRange && (tx.amount < filters.amountRange[0] || tx.amount > filters.amountRange[1])) return false;
       if (filters.flowRange) {
-        // Only show tx if both from/to accounts are in flow range (absolute value)
-        const fromFlow = Math.abs(accountFlows[tx.from] || 0);
-        const toFlow = Math.abs(accountFlows[tx.to] || 0);
-        if ((fromFlow < filters.flowRange[0] || fromFlow > filters.flowRange[1]) && (toFlow < filters.flowRange[0] || toFlow > filters.flowRange[1])) return false;
+        // Only show tx if the total flow between the two accounts is in range
+        const key = [tx.from, tx.to].sort().join("|");
+        const pairFlow = pairFlows.get(key) || 0;
+        if (pairFlow < filters.flowRange[0] || pairFlow > filters.flowRange[1]) return false;
       }
       return true;
     });
-  }, [transactions, filters, accountFlows]);
+  }, [transactions, filters, pairFlows]);
 
   // Only show transactions involving any active account
   const activeFilteredTransactions = useMemo(() => {
@@ -127,7 +133,7 @@ function App() {
               );
             }}
             transactions={transactions}
-            accountFlows={accountFlows}
+            accountFlows={pairFlowsObj}
           />
         </div>
       </div>
