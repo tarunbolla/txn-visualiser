@@ -258,12 +258,19 @@ const TreeGraph: React.FC<TreeGraphProps> = ({ transactions, activeAccount, minA
       });
       
       // Collect nodes and texts
+      // Compute min/max value for scaling
+      const nodeValues = outRoot.descendants().map(d => d.data.value);
+      const minNodeValue = Math.min(...nodeValues, 0);
+      const maxNodeValue = Math.max(...nodeValues, 1);
+      const scaleRadius = d3.scaleSqrt()
+        .domain([minNodeValue, maxNodeValue])
+        .range([4, 16]);
       outRoot.descendants().forEach((d, i) => {
         allNodes.push({
           id: `out-${d.data.id}`,
           x: d.y!,
           y: d.x!,
-          r: NODE_RADIUS,
+          r: scaleRadius(d.data.value),
           fill: "#fff",
           stroke: "#555",
           strokeWidth: 1.5,
@@ -320,12 +327,19 @@ const TreeGraph: React.FC<TreeGraphProps> = ({ transactions, activeAccount, minA
       });
       
       // Collect nodes and texts
+      // Compute min/max value for scaling
+      const inNodeValues = inRoot.descendants().map(d => d.data.value);
+      const minInNodeValue = Math.min(...inNodeValues, 0);
+      const maxInNodeValue = Math.max(...inNodeValues, 1);
+      const inScaleRadius = d3.scaleSqrt()
+        .domain([minInNodeValue, maxInNodeValue])
+        .range([4, 16]);
       inRoot.descendants().forEach((d, i) => {
         allNodes.push({
           id: `in-${d.data.id}`,
           x: d.y!,
           y: d.x!,
-          r: NODE_RADIUS,
+          r: inScaleRadius(d.data.value),
           fill: "#fff",
           stroke: "#555",
           strokeWidth: 1.5,
