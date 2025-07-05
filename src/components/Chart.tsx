@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import type { Transaction, Account } from "../data";
 import { config, formatCurrencyShort } from "../data";
@@ -20,6 +20,8 @@ const Chart: React.FC<ChartProps> = ({
 }) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  // Store the current x domain for zooming
+  const [xDomain, setXDomain] = useState<[Date, Date] | null>(null);
 
   // Use a ref to hold the latest callbacks, avoiding stale closures in D3
   const callbacks = useRef({ onShowTooltip, onHideTooltip, onToggleFlag });
@@ -56,9 +58,10 @@ const Chart: React.FC<ChartProps> = ({
     const dates = transactions.map((d) => d.parsedDate!);
     const minDate = d3.min(dates)!;
     const maxDate = d3.max(dates)!;
+    // Use zoomed domain if present
     const xScale = d3
       .scaleTime()
-      .domain([minDate, maxDate])
+      .domain(xDomain || [minDate, maxDate])
       .range([margin.left, width - margin.right]);
 
     // Y: accounts as bands
@@ -197,6 +200,13 @@ const Chart: React.FC<ChartProps> = ({
     });
     const arrowSpacing = 15; // px between arrows on same date (increased for better separation)
 
+    // Only render transactions within the current xScale domain
+    const [xStart, xEnd] = xScale.domain();
+    const visibleTransactions: Transaction[] = transactions.filter((t: Transaction) => {
+      const d = t.parsedDate!;
+      return d >= xStart && d <= xEnd;
+    });
+
     // Draw arrows for transactions
     const arrowsGroup = svg
       .append("g")
@@ -204,24 +214,25 @@ const Chart: React.FC<ChartProps> = ({
       .attr("clip-path", "url(#chart-area)");
       
     const arrowElements = arrowsGroup
-      .selectAll("g.tx-arrow-group")
-      .data(transactions)
+      .selectAll<SVGGElement, Transaction>("g.tx-arrow-group")
+      .data(visibleTransactions)
       .enter()
       .append("g")
       .attr("class", "tx-arrow-group");
 
     // Draw all elements for each transaction and add handlers to the group
-    arrowElements.each(function (d) {
+    arrowElements.each(function (_, i, nodes) {
         const group = d3.select(this);
+        const d = d3.select(nodes[i]).datum() as Transaction;
 
         const fromY = yScale(d.from)! + yScale.bandwidth() / 2;
         const toY = yScale(d.to)! + yScale.bandwidth() / 2;
         const baseX = xScale(d.parsedDate!);
-        const txnsOnSameDate = transactions.filter(tx => tx.date === d.date);
+        const txnsOnSameDate = visibleTransactions.filter((tx: Transaction) => tx.date === d.date);
         const groupSize = txnsOnSameDate.length;
         const myIndex = txOffsetMap.get(d.id) || 0;
         const offset = (myIndex - (groupSize - 1) / 2) * arrowSpacing;
-        const x = Math.max(margin.left + 25, Math.min(width - margin.right - 25, baseX + offset));
+        const x = baseX + offset;
         const arrowColor = config.transactionTypeColors[d.type as keyof typeof config.transactionTypeColors] || config.defaultArrowColor;
         const markerType = d.type || "Other";
         const arrowMarkerId = config.transactionTypeColors[markerType as keyof typeof config.transactionTypeColors] 
@@ -380,7 +391,35 @@ const Chart: React.FC<ChartProps> = ({
     return () => {
       resizeObserver.disconnect();
     };
-  }, [transactions, accounts]); // Dependencies are now only data-related
+  }, [transactions, accounts, xDomain]); // Dependencies are now only data-related
+
+  // D3 zoom for X axis only
+  useEffect(() => {
+    if (!svgRef.current) return;
+    const svg = d3.select(svgRef.current);
+    // Remove any previous zoom listeners
+    svg.on("wheel.zoom", null).on("mousedown.zoom", null).on("touchstart.zoom", null);
+    // Get initial domain
+    const dates = transactions.map((d) => d.parsedDate!);
+    const minDate = d3.min(dates)!;
+    const maxDate = d3.max(dates)!;
+    const x = d3.scaleTime().domain([minDate, maxDate]).range([150, Math.max(600, svgRef.current.getBoundingClientRect().width - 48) - 30]);
+    // Set up zoom
+    const zoom = d3.zoom<SVGSVGElement, unknown>()
+      .scaleExtent([0.5, 10])
+      .translateExtent([[x.range()[0], 0], [x.range()[1], 0]])
+      .on("zoom", (event) => {
+        // Only X axis
+        const t = event.transform;
+        const zx = t.rescaleX(x);
+        setXDomain(zx.domain() as [Date, Date]);
+      });
+    svg.call(zoom as any);
+    // Clean up
+    return () => {
+      svg.on("wheel.zoom", null).on("mousedown.zoom", null).on("touchstart.zoom", null);
+    };
+  }, [transactions]);
 
   return (
     <div className="chart-container" ref={containerRef}>
