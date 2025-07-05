@@ -9,6 +9,7 @@ export interface ChartProps {
   onShowTooltip: (content: React.ReactNode, x: number, y: number) => void;
   onHideTooltip: () => void;
   onToggleFlag: (id: string) => void;
+  onVisibleTransactionsChange?: (visible: Transaction[]) => void; // NEW PROP
 }
 
 const Chart: React.FC<ChartProps> = ({ 
@@ -17,6 +18,7 @@ const Chart: React.FC<ChartProps> = ({
   onShowTooltip,
   onHideTooltip,
   onToggleFlag,
+  onVisibleTransactionsChange,
 }) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -67,7 +69,7 @@ const Chart: React.FC<ChartProps> = ({
         .range(config.labelAmountBracketColors);
 
     // X: time scale
-    const dates = transactions.map((d) => d.parsedDate!);
+    // const dates = transactions.map((d) => d.parsedDate!); // Not used
     // Use padded domain for default view
     const [paddedMin, paddedMax] = initialXDomain;
     const minDate = paddedMin;
@@ -220,6 +222,10 @@ const Chart: React.FC<ChartProps> = ({
       const d = t.parsedDate!;
       return d >= xStart && d <= xEnd;
     });
+    // Notify parent of visible transactions
+    if (onVisibleTransactionsChange) {
+      onVisibleTransactionsChange(visibleTransactions);
+    }
 
     // For horizontal spacing: group txns by date only
     const txByDate = d3.rollups(

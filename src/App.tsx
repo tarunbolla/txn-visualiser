@@ -4,6 +4,7 @@ import Controls from "./components/Controls";
 import TransactionsTable from "./components/TransactionsTable";
 import Tooltip from "./components/Tooltip";
 import { rawTransactionsData, accounts, parseDate } from "./data";
+import type { Transaction } from "./data";
 import "./App.css";
 
 // Remove dateRange from Filters type
@@ -51,6 +52,8 @@ function App() {
     }))
   );
 
+  const [visibleTransactions, setVisibleTransactions] = useState<Transaction[]>([]); // Holds visible txns in chart
+
   const handleToggleFlag = (id: string) => {
     setTransactions(currentTransactions =>
       currentTransactions.map(tx =>
@@ -84,12 +87,12 @@ function App() {
     });
   }, [transactions, filters, accountFlows]);
 
-  // Pagination
-  const totalPages = Math.ceil(filteredTransactions.length / PAGE_SIZE);
+  // Pagination (now based on visibleTransactions)
+  const totalPages = Math.ceil(visibleTransactions.length / PAGE_SIZE);
   const paginatedTransactions = useMemo(() => {
     const start = (page - 1) * PAGE_SIZE;
-    return filteredTransactions.slice(start, start + PAGE_SIZE);
-  }, [filteredTransactions, page]);
+    return visibleTransactions.slice(start, start + PAGE_SIZE);
+  }, [visibleTransactions, page]);
 
   // Handlers
   const handleFilterChange = (newFilters: Partial<Filters>) => {
@@ -123,6 +126,7 @@ function App() {
           onShowTooltip={handleShowTooltip}
           onHideTooltip={handleHideTooltip}
           onToggleFlag={handleToggleFlag}
+          onVisibleTransactionsChange={setVisibleTransactions} // NEW: sync visible txns
         />
       </div>
 
