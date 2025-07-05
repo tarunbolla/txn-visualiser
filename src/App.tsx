@@ -78,9 +78,9 @@ function App() {
     return transactions.filter((tx) => {
       if (filters.amountRange && (tx.amount < filters.amountRange[0] || tx.amount > filters.amountRange[1])) return false;
       if (filters.flowRange) {
-        // Only show tx if both from/to accounts are in flow range
-        const fromFlow = accountFlows[tx.from] || 0;
-        const toFlow = accountFlows[tx.to] || 0;
+        // Only show tx if both from/to accounts are in flow range (absolute value)
+        const fromFlow = Math.abs(accountFlows[tx.from] || 0);
+        const toFlow = Math.abs(accountFlows[tx.to] || 0);
         if ((fromFlow < filters.flowRange[0] || fromFlow > filters.flowRange[1]) && (toFlow < filters.flowRange[0] || toFlow > filters.flowRange[1])) return false;
       }
       return true;

@@ -26,9 +26,9 @@ const Controls: React.FC<ControlsProps> = ({ filters, onFilterChange, transactio
   
   // Compute min/max for flow slider
   const [minFlow, maxFlow] = React.useMemo(() => {
-    const vals = Object.values(accountFlows);
+    const vals = Object.values(accountFlows).map(Math.abs);
     if (!vals.length) return [0, 10000];
-    return [Math.min(...vals), Math.max(...vals)];
+    return [0, Math.max(...vals)]; // Always start at 0
   }, [accountFlows]);
 
   const currentAmountRange = filters.amountRange || [minAmount, maxAmount];
