@@ -72,6 +72,10 @@ export const accounts: Account[] = [
   { id: "UTIL001", name: "Sydney Utilities" },
   { id: "ELEC001", name: "JB Hi-Fi Electronics" },
   { id: "ATM001", name: "Westpac ATM 123" },
+  { id: "SHELL1", name: "Shell Pty Ltd" },
+  { id: "MULE1", name: "Mule Account" },
+  { id: "CAR001", name: "Luxury Car Dealer" },
+  { id: "JEWL001", name: "Sydney Jewellers" },
 ];
 
 export const rawTransactionsData: Transaction[] = [
@@ -217,4 +221,16 @@ export const rawTransactionsData: Transaction[] = [
   { date: "2024-09-14", from: "A1001", to: "UTIL001", amount: 31.0, type: "DEFT", description: "Streaming Service", id: "tx-124" },
   { date: "2024-09-14", from: "B2001", to: "UTIL001", amount: 31.0, type: "DEFT", description: "Streaming Service", id: "tx-125" },
   { date: "2024-09-14", from: "C3001", to: "UTIL001", amount: 31.0, type: "DEFT", description: "Streaming Service", id: "tx-126" },
+
+  // --- Money Laundering Simulation (September) ---
+  // Step 1: Large cash deposit (placement)
+  { date: "2024-09-15", from: "ATM001", to: "A1001", amount: 25000, type: "CASH", description: "Large Cash Deposit (Placement)", id: "tx-ML1" },
+  // Step 2: Layering - rapid transfers through savings, shell, mule
+  { date: "2024-09-15", from: "A1001", to: "A1002", amount: 12400, type: "CASH", description: "Layering Transfer 1", id: "tx-ML2" },
+  { date: "2024-09-15", from: "A1002", to: "SHELL1", amount: 12300, type: "IMT", description: "Layering Transfer 2 (to Shell)", id: "tx-ML3" },
+  { date: "2024-09-16", from: "SHELL1", to: "MULE1", amount: 12200, type: "IMT", description: "Layering Transfer 3 (to Mule)", id: "tx-ML4" },
+  // Step 3: Integration - high-value purchase
+  { date: "2024-09-17", from: "MULE1", to: "CAR001", amount: 12000, type: "DEFT", description: "Luxury Car Purchase (Integration)", id: "tx-ML5" },
+  // Additional: Jewelry purchase
+  { date: "2024-09-18", from: "MULE1", to: "JEWL001", amount: 2000, type: "DEFT", description: "Jewelry Purchase (Integration)", id: "tx-ML6" },
 ];

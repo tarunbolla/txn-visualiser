@@ -58,7 +58,7 @@ const Chart: React.FC<ChartProps> = ({
     // Use fixed height for better scrollable layout, increased to accommodate legend
     const width = Math.max(600, containerRect.width - 48); // Account for padding
     const height = 580; // Increased height to accommodate legend below x-axis
-    const margin = { top: 30, right: 30, bottom: 55, left: 150 };
+    const margin = { top: 30, right: 30, bottom: 55, left: 200 };
 
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove();
@@ -198,7 +198,7 @@ const Chart: React.FC<ChartProps> = ({
         const text = d3.select(this);
         const id = d as string;
         const label = accounts.find(a => a.id === id)?.name || id;
-        const maxWidth = 120;
+        const maxWidth = 220; 
         const words = label.split(/\s+/).reverse();
         let word: string | undefined;
         let line: string[] = [];
@@ -243,7 +243,7 @@ const Chart: React.FC<ChartProps> = ({
       d3.select(this)
         .append("text")
         .attr("x", -16)
-        .attr("y", 10 + (lastLineCount - 1) * 16) // Offset by number of wrapped lines
+        .attr("y", 14 + (lastLineCount - 1) * 16) // Offset by number of wrapped lines
         .attr("text-anchor", "end")
         .attr("font-size", 11)
         .attr("fill", "#6b7280")
@@ -531,7 +531,7 @@ const Chart: React.FC<ChartProps> = ({
     svg.on("wheel.zoom", null).on("mousedown.zoom", null).on("touchstart.zoom", null);
     // Use buffered domain for zoom
     const [minDate, maxDate] = initialXDomain;
-    const chartLeft = 150; // margin.left
+    const chartLeft = 200; // margin.left
     const chartRight = Math.max(600, svgRef.current.getBoundingClientRect().width - 48) - 30; // width - margin.right
     const chartTop = 30; // margin.top
     const chartBottom = 580 - 55; // height - margin.bottom
