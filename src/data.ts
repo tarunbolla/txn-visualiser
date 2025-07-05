@@ -17,7 +17,7 @@ export const config = {
   },
   labelAmountBracketColors: ["#FFE0B2", "#FFCC80", "#FFA07A", "#F08080"],
   defaultArrowColor: "#6b7280",
-  normalArrowThickness: "1.5px",
+  normalArrowThickness: 1.5,
 };
 
 import * as d3 from "d3";

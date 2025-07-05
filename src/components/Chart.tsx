@@ -8,6 +8,7 @@ export interface ChartProps {
   accounts: Account[];
   onShowTooltip: (content: React.ReactNode, x: number, y: number) => void;
   onHideTooltip: () => void;
+  onToggleFlag: (id: string) => void;
 }
 
 const Chart: React.FC<ChartProps> = ({ 
@@ -15,9 +16,16 @@ const Chart: React.FC<ChartProps> = ({
   accounts, 
   onShowTooltip,
   onHideTooltip,
+  onToggleFlag,
 }) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+
+  // Use a ref to hold the latest callbacks, avoiding stale closures in D3
+  const callbacks = useRef({ onShowTooltip, onHideTooltip, onToggleFlag });
+  useEffect(() => {
+    callbacks.current = { onShowTooltip, onHideTooltip, onToggleFlag };
+  }, [onShowTooltip, onHideTooltip, onToggleFlag]);
 
   useEffect(() => {
     if (!containerRef.current || !svgRef.current) return;
@@ -36,16 +44,13 @@ const Chart: React.FC<ChartProps> = ({
     const svgRect = svgRef.current.getBoundingClientRect();
 
     // Helper function to get label background color based on amount
-    const getLabelColor = (amount: number) => {
-      const minAmount = Math.min(...transactions.map(t => t.amount));
-      const maxAmount = Math.max(...transactions.map(t => t.amount));
-      const normalizedAmount = (amount - minAmount) / (maxAmount - minAmount);
-      // Interpolate between pastel orange and red
-      const red = Math.round(255 - (normalizedAmount * 40)); // 255 to 215
-      const green = Math.round(165 - (normalizedAmount * 65)); // 165 to 100
-      const blue = Math.round(79 - (normalizedAmount * 39)); // 79 to 40
-      return `rgb(${red}, ${green}, ${blue})`;
-    };
+    const minAmount = d3.min(transactions, t => t.amount);
+    const maxAmount = d3.max(transactions, t => t.amount);
+    const labelColorDomain = (minAmount === undefined || maxAmount === undefined || minAmount === maxAmount) ?
+                             [0, Math.max(1, maxAmount || 1)] : [minAmount, maxAmount];
+    const labelAmountColorScale = d3.scaleQuantize<string>()
+        .domain(labelColorDomain)
+        .range(config.labelAmountBracketColors);
 
     // X: time scale
     const dates = transactions.map((d) => d.parsedDate!);
@@ -77,32 +82,32 @@ const Chart: React.FC<ChartProps> = ({
 
     // Create arrowhead markers
     const defs = svg.select("defs");
-    defs
-      .append("marker")
-      .attr("id", "arrowhead")
-      .attr("viewBox", "0 0 10 10")
-      .attr("refX", 9)
-      .attr("refY", 5)
-      .attr("markerWidth", 6)
-      .attr("markerHeight", 6)
-      .attr("orient", "auto")
-      .append("path")
-      .attr("d", "M0,0 L10,5 L0,10 z")
-      .attr("fill", "#374151");
     Object.entries(config.transactionTypeColors).forEach(([type, color]) => {
       defs
         .append("marker")
-        .attr("id", `arrowhead-${type}`)
-        .attr("viewBox", "0 0 10 10")
-        .attr("refX", 9)
-        .attr("refY", 5)
-        .attr("markerWidth", 6)
-        .attr("markerHeight", 6)
+        .attr("id", `arrowhead-${type.replace(/\s+/g, '-')}`)
+        .attr("viewBox", "-0 -5 10 10")
+        .attr("refX", 8)
+        .attr("refY", 0)
+        .attr("markerWidth", 5)
+        .attr("markerHeight", 5)
         .attr("orient", "auto")
         .append("path")
-        .attr("d", "M0,0 L10,5 L0,10 z")
+        .attr("d", "M 0,-5 L 10 ,0 L 0,5")
         .attr("fill", color);
     });
+    defs
+      .append("marker")
+      .attr("id", "arrowhead-default")
+      .attr("viewBox", "-0 -5 10 10")
+      .attr("refX", 8)
+      .attr("refY", 0)
+      .attr("markerWidth", 5)
+      .attr("markerHeight", 5)
+      .attr("orient", "auto")
+      .append("path")
+      .attr("d", "M 0,-5 L 10 ,0 L 0,5")
+      .attr("fill", config.defaultArrowColor);
 
     // Draw grid lines first (background)
     const gridGroup = svg.append("g").attr("class", "grid-background");
@@ -205,21 +210,23 @@ const Chart: React.FC<ChartProps> = ({
       .append("g")
       .attr("class", "tx-arrow-group");
 
-    // Draw arrow lines first
+    // Draw all elements for each transaction and add handlers to the group
     arrowElements.each(function (d) {
+        const group = d3.select(this);
+
         const fromY = yScale(d.from)! + yScale.bandwidth() / 2;
         const toY = yScale(d.to)! + yScale.bandwidth() / 2;
         const baseX = xScale(d.parsedDate!);
-        // Get the number of transactions on the same date
         const txnsOnSameDate = transactions.filter(tx => tx.date === d.date);
         const groupSize = txnsOnSameDate.length;
         const myIndex = txOffsetMap.get(d.id) || 0;
-        // Center the group and space them evenly
         const offset = (myIndex - (groupSize - 1) / 2) * arrowSpacing;
-        // Add more space from y-axis borders
         const x = Math.max(margin.left + 25, Math.min(width - margin.right - 25, baseX + offset));
         const arrowColor = config.transactionTypeColors[d.type as keyof typeof config.transactionTypeColors] || config.defaultArrowColor;
-        const arrowMarkerId = config.transactionTypeColors[d.type as keyof typeof config.transactionTypeColors] ? `arrowhead-${d.type}` : 'arrowhead';
+        const markerType = d.type || "Other";
+        const arrowMarkerId = config.transactionTypeColors[markerType as keyof typeof config.transactionTypeColors] 
+            ? `arrowhead-${markerType.replace(/\s+/g, '-')}` 
+            : 'arrowhead-default';
 
         const fromAccount = accounts.find(a => a.id === d.from)?.name || d.from;
         const toAccount = accounts.find(a => a.id === d.to)?.name || d.to;
@@ -256,117 +263,76 @@ const Chart: React.FC<ChartProps> = ({
         );
 
         // Draw straight line (arrow)
-        d3.select(this)
+        group
           .append("line")
           .attr("x1", x)
           .attr("y1", fromY)
           .attr("x2", x)
           .attr("y2", toY)
           .attr("stroke", arrowColor)
-          .attr("stroke-width", 2)
+          .attr("stroke-width", config.normalArrowThickness)
           .attr("fill", "none")
           .attr("marker-end", `url(#${arrowMarkerId})`)
-          .attr("opacity", 0.85)
-          .style("cursor", "pointer")
-          .on("mouseenter", function () {
-            d3.select(this as SVGLineElement).attr("opacity", 1);
-            // Position tooltip just above the top of the arrow, centered horizontally
-            const tooltipX = svgRect.left + x;
-            const tooltipY = svgRect.top + Math.min(fromY, toY);
-            onShowTooltip(tooltipContent, tooltipX, tooltipY);
-          })
-          .on("mouseleave", function () {
-            d3.select(this as SVGLineElement).attr("opacity", 0.85);
-            onHideTooltip();
-          });
-      });
-
-    // Draw labels on top (separate pass to ensure they're above arrows)
-    arrowElements.each(function (d) {
-        const fromY = yScale(d.from)! + yScale.bandwidth() / 2;
-        const toY = yScale(d.to)! + yScale.bandwidth() / 2;
-        const baseX = xScale(d.parsedDate!);
-        const txnsOnSameDate = transactions.filter(tx => tx.date === d.date);
-        const groupSize = txnsOnSameDate.length;
-        const myIndex = txOffsetMap.get(d.id) || 0;
-        const offset = (myIndex - (groupSize - 1) / 2) * arrowSpacing;
-        const x = Math.max(margin.left + 25, Math.min(width - margin.right - 25, baseX + offset));
-
-        const fromAccount = accounts.find(a => a.id === d.from)?.name || d.from;
-        const toAccount = accounts.find(a => a.id === d.to)?.name || d.to;
-
-        const tooltipContent = (
-          <div 
-            style={{ 
-              fontSize: '12px', 
-              lineHeight: '1.4',
-              userSelect: 'text',
-              cursor: 'text',
-              whiteSpace: 'nowrap'
-            }}
-          >
-            <div style={{ fontWeight: 'bold', marginBottom: '6px', fontSize: '13px', color: '#fff' }}>
-              {d.description || "Transaction"}
-            </div>
-            <div style={{ marginBottom: '3px' }}>
-              <strong>Amount:</strong> {formatCurrencyShort(d.amount)}
-            </div>
-            <div style={{ marginBottom: '2px' }}>
-              <strong>From:</strong> {fromAccount}
-            </div>
-            <div style={{ marginBottom: '2px' }}>
-              <strong>To:</strong> {toAccount}
-            </div>
-            <div style={{ marginBottom: '2px' }}>
-              <strong>Type:</strong> {d.type}
-            </div>
-            <div style={{ marginBottom: '2px' }}>
-              <strong>Date:</strong> {d.date}
-            </div>
-          </div>
-        );
+          .attr("opacity", 0.85);
 
         // Add amount label with colored background at center of the arrow
         const midY = (fromY + toY) / 2;
-        const labelGroup = d3.select(this).append("g").attr("class", "amount-label");
+        const labelGroup = group.append("g").attr("class", "amount-label");
+
         const labelText = formatCurrencyShort(d.amount);
-        const textWidth = labelText.length * 6; // Approximate text width
-        const textHeight = 14;
-        
-        labelGroup
-          .append("rect")
-          .attr("x", x - textWidth / 2 - 2)
-          .attr("y", midY - textHeight / 2)
-          .attr("width", textWidth + 4)
-          .attr("height", textHeight)
-          .attr("fill", getLabelColor(d.amount))
-          .attr("fill-opacity", 0.9)
-          .attr("rx", 2)
-          .attr("stroke", "#fff")
-          .attr("stroke-width", 0.5)
-          .style("cursor", "pointer")
-          .on("mouseenter", function () {
-            // Position tooltip just above the arrow, centered horizontally
-            const tooltipX = svgRect.left + x;
-            const tooltipY = svgRect.top + Math.min(fromY, toY); // Use arrow's top for Y
-            onShowTooltip(tooltipContent, tooltipX, tooltipY);
-          })
-          .on("mouseleave", function () {
-            onHideTooltip();
-          });
-        labelGroup
+        const amountTextElement = labelGroup
           .append("text")
           .attr("x", x)
           .attr("y", midY)
           .attr("text-anchor", "middle")
           .attr("dominant-baseline", "middle")
           .attr("font-size", 10)
-          .attr("font-weight", "bold")
-          .attr("fill", "#fff")
+          .attr("fill", "#000")
           .attr("font-family", "'Segoe UI', Arial, sans-serif")
-          .style("cursor", "pointer")
-          .style("pointer-events", "none") // Let the rect handle the events
           .text(labelText);
+
+        const amountBBox = (amountTextElement.node() as SVGTextElement).getBBox();
+
+        labelGroup
+          .insert("rect", "text")
+          .attr("x", amountBBox.x - 4)
+          .attr("y", amountBBox.y - 2)
+          .attr("width", amountBBox.width + 8)
+          .attr("height", amountBBox.height + 4)
+          .attr("fill", labelAmountColorScale(d.amount))
+          .attr("fill-opacity", 0.9)
+          .attr("rx", 4)
+          .attr("stroke", "#fff")
+          .attr("stroke-width", 0.5);
+
+        if (d.isFlagged) {
+          labelGroup
+            .append("text")
+            .attr("x", amountBBox.x + amountBBox.width + 6)
+            .attr("y", midY)
+            .attr("text-anchor", "start")
+            .attr("dominant-baseline", "middle")
+            .attr("font-size", 14)
+            .text("🚩");
+        }
+
+        // Add handlers to the parent group for reliable interaction
+        group
+          .style("cursor", "pointer")
+          .on("click", (event) => {
+            event.stopPropagation();
+            callbacks.current.onToggleFlag(d.id);
+          })
+          .on("mouseenter", function () {
+            group.select("line").attr("opacity", 1);
+            const tooltipX = svgRect.left + x;
+            const tooltipY = svgRect.top + Math.min(fromY, toY);
+            callbacks.current.onShowTooltip(tooltipContent, tooltipX, tooltipY);
+          })
+          .on("mouseleave", function () {
+            group.select("line").attr("opacity", 0.85);
+            callbacks.current.onHideTooltip();
+          });
       });
 
     // Add legend at bottom (positioned to avoid x-axis overlap)
@@ -414,7 +380,7 @@ const Chart: React.FC<ChartProps> = ({
     return () => {
       resizeObserver.disconnect();
     };
-  }, [transactions, accounts, onShowTooltip, onHideTooltip]);
+  }, [transactions, accounts]); // Dependencies are now only data-related
 
   return (
     <div className="chart-container" ref={containerRef}>

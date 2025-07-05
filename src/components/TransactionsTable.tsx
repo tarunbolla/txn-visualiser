@@ -8,6 +8,7 @@ export interface TransactionsTableProps {
   page: number;
   totalPages: number;
   onPageChange: (page: number) => void;
+  onToggleFlag: (id: string) => void;
 }
 
 const TransactionsTable: React.FC<TransactionsTableProps> = ({
@@ -16,6 +17,7 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
   page,
   totalPages,
   onPageChange,
+  onToggleFlag,
 }) => {
   const getAccountName = (id: string) =>
     accounts.find((a) => a.id === id)?.name || id;
@@ -26,6 +28,7 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
       <table>
         <thead>
           <tr>
+            <th style={{ width: '20px' }}></th>
             <th>Date</th>
             <th>From</th>
             <th>From #</th>
@@ -39,11 +42,24 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
         <tbody>
           {transactions.length === 0 ? (
             <tr>
-              <td colSpan={8}>No transactions found.</td>
+              <td colSpan={9}>No transactions found.</td>
             </tr>
           ) : (
             transactions.map((tx) => (
               <tr key={tx.id}>
+                <td>
+                  <span 
+                    onClick={() => onToggleFlag(tx.id)} 
+                    style={{
+                      cursor: 'pointer',
+                      filter: tx.isFlagged ? 'none' : 'grayscale(100%)',
+                      opacity: tx.isFlagged ? 1 : 0.6,
+                    }}
+                    title={tx.isFlagged ? 'Unflag Transaction' : 'Flag Transaction'}
+                  >
+                    🚩
+                  </span>
+                </td>
                 <td>
                   {tx.parsedDate
                     ? formatDate(tx.parsedDate)

@@ -46,13 +46,21 @@ function App() {
   });
   const [page, setPage] = useState(1);
 
-  // Parse dates only
-  const transactions = useMemo(() =>
+  const [transactions, setTransactions] = useState(() =>
     rawTransactionsData.map((tx) => ({
       ...tx,
       parsedDate: parseDate(tx.date) || undefined,
-    })), []
+      isFlagged: tx.isFlagged || false, // Initialize isFlagged
+    }))
   );
+
+  const handleToggleFlag = (id: string) => {
+    setTransactions(currentTransactions =>
+      currentTransactions.map(tx =>
+        tx.id === id ? { ...tx, isFlagged: !tx.isFlagged } : tx
+      )
+    );
+  };
 
   // Compute account flows for flow filter
   const accountFlows = useMemo(() => {
@@ -63,7 +71,7 @@ function App() {
       flows[tx.to] = (flows[tx.to] || 0) + tx.amount;
     });
     return flows;
-  }, [transactions, accounts]);
+  }, [transactions]);
 
   // Filtered transactions (add amount and flow filters)
   const filteredTransactions = useMemo(() => {
@@ -119,6 +127,7 @@ function App() {
           accounts={accounts}
           onShowTooltip={handleShowTooltip}
           onHideTooltip={handleHideTooltip}
+          onToggleFlag={handleToggleFlag}
         />
       </div>
 
@@ -130,6 +139,7 @@ function App() {
             page={page}
             totalPages={totalPages}
             onPageChange={handlePageChange}
+            onToggleFlag={handleToggleFlag}
           />
         </div>
       </div>
