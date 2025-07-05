@@ -76,69 +76,56 @@ export const accounts: Account[] = [
 
 export const rawTransactionsData: Transaction[] = [
   // --- July Transactions ---
-  // --- Salary credits ---
-  { date: "2024-07-01", from: "EMP001", to: "A1001", amount: 3200, type: "DEFT", description: "Salary - Alice Smith", id: "tx-1" },
-  { date: "2024-07-01", from: "EMP001", to: "B2001", amount: 3200, type: "DEFT", description: "Salary - Bob Lee", id: "tx-2" },
-  { date: "2024-07-01", from: "EMP001", to: "C3001", amount: 3200, type: "DEFT", description: "Salary - Carol Tan", id: "tx-3" },
-
-  // --- Daily expenses (groceries, utilities, etc.) ---
-  { date: "2024-07-02", from: "A1001", to: "SUP001", amount: 85.5, type: "Card", description: "Groceries", id: "tx-4" },
-  { date: "2024-07-02", from: "B2001", to: "SUP001", amount: 92.3, type: "Card", description: "Groceries", id: "tx-5" },
-  { date: "2024-07-02", from: "C3001", to: "SUP001", amount: 78.9, type: "Card", description: "Groceries", id: "tx-6" },
-  { date: "2024-07-03", from: "A1001", to: "UTIL001", amount: 120.0, type: "DEFT", description: "Electricity Bill", id: "tx-7" },
-  { date: "2024-07-03", from: "B2001", to: "UTIL001", amount: 115.0, type: "DEFT", description: "Electricity Bill", id: "tx-8" },
-  { date: "2024-07-03", from: "C3001", to: "UTIL001", amount: 118.0, type: "DEFT", description: "Electricity Bill", id: "tx-9" },
-  { date: "2024-07-04", from: "A1001", to: "ELEC001", amount: 250.0, type: "Card", description: "Electronics Purchase", id: "tx-10" },
-  { date: "2024-07-04", from: "B2001", to: "ELEC001", amount: 180.0, type: "Card", description: "Electronics Purchase", id: "tx-11" },
-  { date: "2024-07-04", from: "C3001", to: "ELEC001", amount: 210.0, type: "Card", description: "Electronics Purchase", id: "tx-12" },
-
-  // --- Structuring: moving funds between own accounts ---
-  { date: "2024-07-05", from: "A1001", to: "A1002", amount: 950, type: "CASH", description: "Savings Transfer", id: "tx-13" },
-  { date: "2024-07-05", from: "B2001", to: "B2002", amount: 950, type: "CASH", description: "Savings Transfer", id: "tx-14" },
-  { date: "2024-07-05", from: "C3001", to: "C3002", amount: 950, type: "CASH", description: "Savings Transfer", id: "tx-15" },
-
-  // --- Structuring: cross-person, small amounts ---
-  { date: "2024-07-06", from: "A1002", to: "B2002", amount: 480, type: "CASH", description: "Split Transfer", id: "tx-16" },
-  { date: "2024-07-06", from: "B2002", to: "C3002", amount: 470, type: "CASH", description: "Split Transfer", id: "tx-17" },
-  { date: "2024-07-06", from: "C3002", to: "A1002", amount: 460, type: "CASH", description: "Split Transfer", id: "tx-18" },
-
-  // --- More daily expenses ---
-  { date: "2024-07-07", from: "A1001", to: "SUP001", amount: 60.0, type: "Card", description: "Groceries", id: "tx-19" },
-  { date: "2024-07-07", from: "B2001", to: "SUP001", amount: 70.0, type: "Card", description: "Groceries", id: "tx-20" },
-  { date: "2024-07-07", from: "C3001", to: "SUP001", amount: 65.0, type: "Card", description: "Groceries", id: "tx-21" },
-  { date: "2024-07-08", from: "A1001", to: "ATM001", amount: 300.0, type: "CASH", description: "ATM Withdrawal", id: "tx-22" },
-  { date: "2024-07-08", from: "B2001", to: "ATM001", amount: 300.0, type: "CASH", description: "ATM Withdrawal", id: "tx-23" },
-  { date: "2024-07-08", from: "C3001", to: "ATM001", amount: 300.0, type: "CASH", description: "ATM Withdrawal", id: "tx-24" },
-
-  // --- Structuring: more cross-person, small amounts ---
-  { date: "2024-07-09", from: "A1002", to: "C3002", amount: 495, type: "CASH", description: "Split Transfer", id: "tx-25" },
-  { date: "2024-07-09", from: "B2002", to: "A1002", amount: 505, type: "CASH", description: "Split Transfer", id: "tx-26" },
-  { date: "2024-07-09", from: "C3002", to: "B2002", amount: 490, type: "CASH", description: "Split Transfer", id: "tx-27" },
-
-  // --- More daily expenses ---
-  { date: "2024-07-10", from: "A1001", to: "UTIL001", amount: 110.0, type: "DEFT", description: "Water Bill", id: "tx-28" },
-  { date: "2024-07-10", from: "B2001", to: "UTIL001", amount: 112.0, type: "DEFT", description: "Water Bill", id: "tx-29" },
-  { date: "2024-07-10", from: "C3001", to: "UTIL001", amount: 115.0, type: "DEFT", description: "Water Bill", id: "tx-30" },
-
-  // --- More utility transactions ---
-  { date: "2024-07-11", from: "A1001", to: "UTIL001", amount: 95.0, type: "DEFT", description: "Gas Bill", id: "tx-31" },
-  { date: "2024-07-11", from: "B2001", to: "UTIL001", amount: 98.0, type: "DEFT", description: "Gas Bill", id: "tx-32" },
-  { date: "2024-07-11", from: "C3001", to: "UTIL001", amount: 97.0, type: "DEFT", description: "Gas Bill", id: "tx-33" },
-  { date: "2024-07-12", from: "A1001", to: "UTIL001", amount: 60.0, type: "DEFT", description: "Internet Bill", id: "tx-34" },
-  { date: "2024-07-12", from: "B2001", to: "UTIL001", amount: 60.0, type: "DEFT", description: "Internet Bill", id: "tx-35" },
-  { date: "2024-07-12", from: "C3001", to: "UTIL001", amount: 60.0, type: "DEFT", description: "Internet Bill", id: "tx-36" },
-  { date: "2024-07-13", from: "A1001", to: "UTIL001", amount: 45.0, type: "DEFT", description: "Phone Bill", id: "tx-37" },
-  { date: "2024-07-13", from: "B2001", to: "UTIL001", amount: 45.0, type: "DEFT", description: "Phone Bill", id: "tx-38" },
-  { date: "2024-07-13", from: "C3001", to: "UTIL001", amount: 45.0, type: "DEFT", description: "Phone Bill", id: "tx-39" },
-  { date: "2024-07-14", from: "A1001", to: "UTIL001", amount: 30.0, type: "DEFT", description: "Streaming Service", id: "tx-40" },
-  { date: "2024-07-14", from: "B2001", to: "UTIL001", amount: 30.0, type: "DEFT", description: "Streaming Service", id: "tx-41" },
-  { date: "2024-07-14", from: "C3001", to: "UTIL001", amount: 30.0, type: "DEFT", description: "Streaming Service", id: "tx-42" },
+  { date: "2024-07-01", from: "EMP001", to: "A1001", amount: 7200, type: "DEFT", description: "Salary - Alice Smith", id: "tx-1" },
+  { date: "2024-07-02", from: "EMP001", to: "B2001", amount: 7100, type: "DEFT", description: "Salary - Bob Lee", id: "tx-2" },
+  { date: "2024-07-03", from: "EMP001", to: "C3001", amount: 7300, type: "DEFT", description: "Salary - Carol Tan", id: "tx-3" },
+  { date: "2024-07-03", from: "A1001", to: "SUP001", amount: 91.2, type: "Card", description: "Groceries", id: "tx-4" },
+  { date: "2024-07-04", from: "B2001", to: "SUP001", amount: 85.7, type: "Card", description: "Groceries", id: "tx-5" },
+  { date: "2024-07-05", from: "C3001", to: "SUP001", amount: 82.1, type: "Card", description: "Groceries", id: "tx-6" },
+  { date: "2024-07-04", from: "A1001", to: "UTIL001", amount: 127.0, type: "DEFT", description: "Electricity Bill", id: "tx-7" },
+  { date: "2024-07-05", from: "B2001", to: "UTIL001", amount: 109.2, type: "DEFT", description: "Electricity Bill", id: "tx-8" },
+  { date: "2024-07-06", from: "C3001", to: "UTIL001", amount: 123.8, type: "DEFT", description: "Electricity Bill", id: "tx-9" },
+  { date: "2024-07-06", from: "A1001", to: "ELEC001", amount: 241.0, type: "Card", description: "Electronics Purchase", id: "tx-10" },
+  { date: "2024-07-07", from: "B2001", to: "ELEC001", amount: 194.2, type: "Card", description: "Electronics Purchase", id: "tx-11" },
+  { date: "2024-07-08", from: "C3001", to: "ELEC001", amount: 202.5, type: "Card", description: "Electronics Purchase", id: "tx-12" },
+  // Structuring: own accounts
+  { date: "2024-07-07", from: "A1001", to: "A1002", amount: 4200, type: "CASH", description: "Savings Transfer", id: "tx-13" },
+  { date: "2024-07-08", from: "B2001", to: "B2002", amount: 4300, type: "CASH", description: "Savings Transfer", id: "tx-14" },
+  { date: "2024-07-09", from: "C3001", to: "C3002", amount: 4400, type: "CASH", description: "Savings Transfer", id: "tx-15" },
+  // Structuring: cross-person
+  { date: "2024-07-10", from: "A1002", to: "B2002", amount: 4100, type: "CASH", description: "Split Transfer", id: "tx-16" },
+  { date: "2024-07-10", from: "B2002", to: "C3002", amount: 4200, type: "CASH", description: "Split Transfer", id: "tx-17" },
+  { date: "2024-07-11", from: "C3002", to: "A1002", amount: 4300, type: "CASH", description: "Split Transfer", id: "tx-18" },
+  { date: "2024-07-12", from: "A1001", to: "SUP001", amount: 66.0, type: "Card", description: "Groceries", id: "tx-19" },
+  { date: "2024-07-13", from: "B2001", to: "SUP001", amount: 74.2, type: "Card", description: "Groceries", id: "tx-20" },
+  { date: "2024-07-13", from: "C3001", to: "SUP001", amount: 61.8, type: "Card", description: "Groceries", id: "tx-21" },
+  { date: "2024-07-14", from: "A1001", to: "ATM001", amount: 312.0, type: "CASH", description: "ATM Withdrawal", id: "tx-22" },
+  { date: "2024-07-15", from: "B2001", to: "ATM001", amount: 285.0, type: "CASH", description: "ATM Withdrawal", id: "tx-23" },
+  { date: "2024-07-15", from: "C3001", to: "ATM001", amount: 318.0, type: "CASH", description: "ATM Withdrawal", id: "tx-24" },
+  { date: "2024-07-16", from: "A1002", to: "C3002", amount: 540, type: "CASH", description: "Split Transfer", id: "tx-25" },
+  { date: "2024-07-16", from: "B2002", to: "A1002", amount: 470, type: "CASH", description: "Split Transfer", id: "tx-26" },
+  { date: "2024-07-17", from: "C3002", to: "B2002", amount: 510, type: "CASH", description: "Split Transfer", id: "tx-27" },
+  { date: "2024-07-18", from: "A1001", to: "UTIL001", amount: 104.0, type: "DEFT", description: "Water Bill", id: "tx-28" },
+  { date: "2024-07-18", from: "B2001", to: "UTIL001", amount: 120.0, type: "DEFT", description: "Water Bill", id: "tx-29" },
+  { date: "2024-07-19", from: "C3001", to: "UTIL001", amount: 119.0, type: "DEFT", description: "Water Bill", id: "tx-30" },
+  { date: "2024-07-20", from: "A1001", to: "UTIL001", amount: 101.0, type: "DEFT", description: "Gas Bill", id: "tx-31" },
+  { date: "2024-07-20", from: "B2001", to: "UTIL001", amount: 93.0, type: "DEFT", description: "Gas Bill", id: "tx-32" },
+  { date: "2024-07-21", from: "C3001", to: "UTIL001", amount: 102.0, type: "DEFT", description: "Gas Bill", id: "tx-33" },
+  { date: "2024-07-22", from: "A1001", to: "UTIL001", amount: 65.0, type: "DEFT", description: "Internet Bill", id: "tx-34" },
+  { date: "2024-07-22", from: "B2001", to: "UTIL001", amount: 58.0, type: "DEFT", description: "Internet Bill", id: "tx-35" },
+  { date: "2024-07-23", from: "C3001", to: "UTIL001", amount: 67.0, type: "DEFT", description: "Internet Bill", id: "tx-36" },
+  { date: "2024-07-24", from: "A1001", to: "UTIL001", amount: 41.0, type: "DEFT", description: "Phone Bill", id: "tx-37" },
+  { date: "2024-07-24", from: "B2001", to: "UTIL001", amount: 48.0, type: "DEFT", description: "Phone Bill", id: "tx-38" },
+  { date: "2024-07-25", from: "C3001", to: "UTIL001", amount: 44.0, type: "DEFT", description: "Phone Bill", id: "tx-39" },
+  { date: "2024-07-26", from: "A1001", to: "UTIL001", amount: 28.0, type: "DEFT", description: "Streaming Service", id: "tx-40" },
+  { date: "2024-07-26", from: "B2001", to: "UTIL001", amount: 33.0, type: "DEFT", description: "Streaming Service", id: "tx-41" },
+  { date: "2024-07-27", from: "C3001", to: "UTIL001", amount: 29.0, type: "DEFT", description: "Streaming Service", id: "tx-42" },
 
   // --- August Transactions ---
   // Salary credits
-  { date: "2024-08-01", from: "EMP001", to: "A1001", amount: 3200, type: "DEFT", description: "Salary - Alice Smith", id: "tx-43" },
-  { date: "2024-08-01", from: "EMP001", to: "B2001", amount: 3200, type: "DEFT", description: "Salary - Bob Lee", id: "tx-44" },
-  { date: "2024-08-01", from: "EMP001", to: "C3001", amount: 3200, type: "DEFT", description: "Salary - Carol Tan", id: "tx-45" },
+  { date: "2024-08-01", from: "EMP001", to: "A1001", amount: 7200, type: "DEFT", description: "Salary - Alice Smith", id: "tx-43" },
+  { date: "2024-08-01", from: "EMP001", to: "B2001", amount: 7100, type: "DEFT", description: "Salary - Bob Lee", id: "tx-44" },
+  { date: "2024-08-01", from: "EMP001", to: "C3001", amount: 7300, type: "DEFT", description: "Salary - Carol Tan", id: "tx-45" },
   // Daily expenses
   { date: "2024-08-02", from: "A1001", to: "SUP001", amount: 88.0, type: "Card", description: "Groceries", id: "tx-46" },
   { date: "2024-08-02", from: "B2001", to: "SUP001", amount: 90.0, type: "Card", description: "Groceries", id: "tx-47" },
@@ -150,13 +137,13 @@ export const rawTransactionsData: Transaction[] = [
   { date: "2024-08-04", from: "B2001", to: "ELEC001", amount: 185.0, type: "Card", description: "Electronics Purchase", id: "tx-53" },
   { date: "2024-08-04", from: "C3001", to: "ELEC001", amount: 215.0, type: "Card", description: "Electronics Purchase", id: "tx-54" },
   // Structuring: own accounts
-  { date: "2024-08-05", from: "A1001", to: "A1002", amount: 940, type: "CASH", description: "Savings Transfer", id: "tx-55" },
-  { date: "2024-08-05", from: "B2001", to: "B2002", amount: 960, type: "CASH", description: "Savings Transfer", id: "tx-56" },
-  { date: "2024-08-05", from: "C3001", to: "C3002", amount: 950, type: "CASH", description: "Savings Transfer", id: "tx-57" },
+  { date: "2024-08-05", from: "A1001", to: "A1002", amount: 4200, type: "CASH", description: "Savings Transfer", id: "tx-55" },
+  { date: "2024-08-05", from: "B2001", to: "B2002", amount: 4300, type: "CASH", description: "Savings Transfer", id: "tx-56" },
+  { date: "2024-08-05", from: "C3001", to: "C3002", amount: 4400, type: "CASH", description: "Savings Transfer", id: "tx-57" },
   // Structuring: cross-person
-  { date: "2024-08-06", from: "A1002", to: "B2002", amount: 470, type: "CASH", description: "Split Transfer", id: "tx-58" },
-  { date: "2024-08-06", from: "B2002", to: "C3002", amount: 480, type: "CASH", description: "Split Transfer", id: "tx-59" },
-  { date: "2024-08-06", from: "C3002", to: "A1002", amount: 465, type: "CASH", description: "Split Transfer", id: "tx-60" },
+  { date: "2024-08-06", from: "A1002", to: "B2002", amount: 4100, type: "CASH", description: "Split Transfer", id: "tx-58" },
+  { date: "2024-08-06", from: "B2002", to: "C3002", amount: 4200, type: "CASH", description: "Split Transfer", id: "tx-59" },
+  { date: "2024-08-06", from: "C3002", to: "A1002", amount: 4300, type: "CASH", description: "Split Transfer", id: "tx-60" },
   // More daily expenses
   { date: "2024-08-07", from: "A1001", to: "SUP001", amount: 62.0, type: "Card", description: "Groceries", id: "tx-61" },
   { date: "2024-08-07", from: "B2001", to: "SUP001", amount: 68.0, type: "Card", description: "Groceries", id: "tx-62" },
@@ -165,9 +152,9 @@ export const rawTransactionsData: Transaction[] = [
   { date: "2024-08-08", from: "B2001", to: "ATM001", amount: 320.0, type: "CASH", description: "ATM Withdrawal", id: "tx-65" },
   { date: "2024-08-08", from: "C3001", to: "ATM001", amount: 305.0, type: "CASH", description: "ATM Withdrawal", id: "tx-66" },
   // Structuring: more cross-person
-  { date: "2024-08-09", from: "A1002", to: "C3002", amount: 490, type: "CASH", description: "Split Transfer", id: "tx-67" },
-  { date: "2024-08-09", from: "B2002", to: "A1002", amount: 500, type: "CASH", description: "Split Transfer", id: "tx-68" },
-  { date: "2024-08-09", from: "C3002", to: "B2002", amount: 495, type: "CASH", description: "Split Transfer", id: "tx-69" },
+  { date: "2024-08-09", from: "A1002", to: "C3002", amount: 4100, type: "CASH", description: "Split Transfer", id: "tx-67" },
+  { date: "2024-08-09", from: "B2002", to: "A1002", amount: 4200, type: "CASH", description: "Split Transfer", id: "tx-68" },
+  { date: "2024-08-09", from: "C3002", to: "B2002", amount: 4300, type: "CASH", description: "Split Transfer", id: "tx-69" },
   // More daily expenses
   { date: "2024-08-10", from: "A1001", to: "UTIL001", amount: 112.0, type: "DEFT", description: "Water Bill", id: "tx-70" },
   { date: "2024-08-10", from: "B2001", to: "UTIL001", amount: 115.0, type: "DEFT", description: "Water Bill", id: "tx-71" },
@@ -188,9 +175,9 @@ export const rawTransactionsData: Transaction[] = [
 
   // --- September Transactions ---
   // Salary credits
-  { date: "2024-09-01", from: "EMP001", to: "A1001", amount: 3200, type: "DEFT", description: "Salary - Alice Smith", id: "tx-85" },
-  { date: "2024-09-01", from: "EMP001", to: "B2001", amount: 3200, type: "DEFT", description: "Salary - Bob Lee", id: "tx-86" },
-  { date: "2024-09-01", from: "EMP001", to: "C3001", amount: 3200, type: "DEFT", description: "Salary - Carol Tan", id: "tx-87" },
+  { date: "2024-09-01", from: "EMP001", to: "A1001", amount: 7200, type: "DEFT", description: "Salary - Alice Smith", id: "tx-85" },
+  { date: "2024-09-01", from: "EMP001", to: "B2001", amount: 7100, type: "DEFT", description: "Salary - Bob Lee", id: "tx-86" },
+  { date: "2024-09-01", from: "EMP001", to: "C3001", amount: 7300, type: "DEFT", description: "Salary - Carol Tan", id: "tx-87" },
   // Daily expenses
   { date: "2024-09-02", from: "A1001", to: "SUP001", amount: 86.0, type: "Card", description: "Groceries", id: "tx-88" },
   { date: "2024-09-02", from: "B2001", to: "SUP001", amount: 91.0, type: "Card", description: "Groceries", id: "tx-89" },
@@ -202,24 +189,17 @@ export const rawTransactionsData: Transaction[] = [
   { date: "2024-09-04", from: "B2001", to: "ELEC001", amount: 182.0, type: "Card", description: "Electronics Purchase", id: "tx-95" },
   { date: "2024-09-04", from: "C3001", to: "ELEC001", amount: 212.0, type: "Card", description: "Electronics Purchase", id: "tx-96" },
   // Structuring: own accounts
-  { date: "2024-09-05", from: "A1001", to: "A1002", amount: 945, type: "CASH", description: "Savings Transfer", id: "tx-97" },
-  { date: "2024-09-05", from: "B2001", to: "B2002", amount: 955, type: "CASH", description: "Savings Transfer", id: "tx-98" },
-  { date: "2024-09-05", from: "C3001", to: "C3002", amount: 960, type: "CASH", description: "Savings Transfer", id: "tx-99" },
+  { date: "2024-09-05", from: "A1001", to: "A1002", amount: 4200, type: "CASH", description: "Savings Transfer", id: "tx-97" },
+  { date: "2024-09-05", from: "B2001", to: "B2002", amount: 4300, type: "CASH", description: "Savings Transfer", id: "tx-98" },
+  { date: "2024-09-05", from: "C3001", to: "C3002", amount: 4400, type: "CASH", description: "Savings Transfer", id: "tx-99" },
   // Structuring: cross-person
-  { date: "2024-09-06", from: "A1002", to: "B2002", amount: 475, type: "CASH", description: "Split Transfer", id: "tx-100" },
-  { date: "2024-09-06", from: "B2002", to: "C3002", amount: 485, type: "CASH", description: "Split Transfer", id: "tx-101" },
-  { date: "2024-09-06", from: "C3002", to: "A1002", amount: 470, type: "CASH", description: "Split Transfer", id: "tx-102" },
-  // More daily expenses
-  { date: "2024-09-07", from: "A1001", to: "SUP001", amount: 61.0, type: "Card", description: "Groceries", id: "tx-103" },
-  { date: "2024-09-07", from: "B2001", to: "SUP001", amount: 69.0, type: "Card", description: "Groceries", id: "tx-104" },
-  { date: "2024-09-07", from: "C3001", to: "SUP001", amount: 66.0, type: "Card", description: "Groceries", id: "tx-105" },
-  { date: "2024-09-08", from: "A1001", to: "ATM001", amount: 315.0, type: "CASH", description: "ATM Withdrawal", id: "tx-106" },
-  { date: "2024-09-08", from: "B2001", to: "ATM001", amount: 310.0, type: "CASH", description: "ATM Withdrawal", id: "tx-107" },
-  { date: "2024-09-08", from: "C3001", to: "ATM001", amount: 320.0, type: "CASH", description: "ATM Withdrawal", id: "tx-108" },
+  { date: "2024-09-06", from: "A1002", to: "B2002", amount: 4100, type: "CASH", description: "Split Transfer", id: "tx-100" },
+  { date: "2024-09-06", from: "B2002", to: "C3002", amount: 4200, type: "CASH", description: "Split Transfer", id: "tx-101" },
+  { date: "2024-09-06", from: "C3002", to: "A1002", amount: 4300, type: "CASH", description: "Split Transfer", id: "tx-102" },
   // Structuring: more cross-person
-  { date: "2024-09-09", from: "A1002", to: "C3002", amount: 492, type: "CASH", description: "Split Transfer", id: "tx-109" },
-  { date: "2024-09-09", from: "B2002", to: "A1002", amount: 502, type: "CASH", description: "Split Transfer", id: "tx-110" },
-  { date: "2024-09-09", from: "C3002", to: "B2002", amount: 488, type: "CASH", description: "Split Transfer", id: "tx-111" },
+  { date: "2024-09-09", from: "A1002", to: "C3002", amount: 4100, type: "CASH", description: "Split Transfer", id: "tx-109" },
+  { date: "2024-09-09", from: "B2002", to: "A1002", amount: 4200, type: "CASH", description: "Split Transfer", id: "tx-110" },
+  { date: "2024-09-09", from: "C3002", to: "B2002", amount: 4300, type: "CASH", description: "Split Transfer", id: "tx-111" },
   // More daily expenses
   { date: "2024-09-10", from: "A1001", to: "UTIL001", amount: 113.0, type: "DEFT", description: "Water Bill", id: "tx-112" },
   { date: "2024-09-10", from: "B2001", to: "UTIL001", amount: 114.0, type: "DEFT", description: "Water Bill", id: "tx-113" },

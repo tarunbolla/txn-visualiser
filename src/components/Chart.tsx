@@ -243,12 +243,13 @@ const Chart: React.FC<ChartProps> = ({
       d3.select(this)
         .append("text")
         .attr("x", -16)
-        .attr("y", 18 + (lastLineCount - 1) * 16) // Offset by number of wrapped lines
+        .attr("y", 10 + (lastLineCount - 1) * 16) // Offset by number of wrapped lines
         .attr("text-anchor", "end")
         .attr("font-size", 11)
         .attr("fill", "#6b7280")
-        .text(`C: ${formatCurrencyShort(totalCredit)} D: ${formatCurrencyShort(totalDebit)}`);
+        .text(`(C: ${formatCurrencyShort(totalCredit)} D: ${formatCurrencyShort(totalDebit)})`);
     });
+    
 
     // Draw x-axis (dates) at the bottom of the chart area
     // Dynamically choose tick interval based on zoom level
