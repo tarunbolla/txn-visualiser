@@ -53,6 +53,7 @@ function App() {
   );
 
   const [visibleTransactions, setVisibleTransactions] = useState<Transaction[]>([]); // Holds visible txns in chart
+  const [activeAccounts, setActiveAccounts] = useState<string[]>([accounts[0]?.id]); // Start with first account
 
   const handleToggleFlag = (id: string) => {
     setTransactions(currentTransactions =>
@@ -86,6 +87,13 @@ function App() {
       return true;
     });
   }, [transactions, filters, accountFlows]);
+
+  // Only show transactions involving any active account
+  const activeFilteredTransactions = useMemo(() => {
+    return filteredTransactions.filter((tx) => {
+      return activeAccounts.includes(tx.from) || activeAccounts.includes(tx.to);
+    });
+  }, [filteredTransactions, activeAccounts]);
 
   // Pagination (now based on visibleTransactions)
   const totalPages = Math.ceil(visibleTransactions.length / PAGE_SIZE);
@@ -126,7 +134,7 @@ function App() {
 
       <div className="chart-section">
         <Chart
-          transactions={filteredTransactions}
+          transactions={activeFilteredTransactions}
           accounts={accounts}
           onShowTooltip={handleShowTooltip}
           onHideTooltip={handleHideTooltip}
@@ -137,6 +145,8 @@ function App() {
               currentTransactions.map(tx => ({ ...tx, isFlagged: false }))
             );
           }}
+          activeAccounts={activeAccounts}
+          onAddActiveAccount={(id) => setActiveAccounts((prev) => prev.includes(id) ? prev : [...prev, id])}
         />
       </div>
 

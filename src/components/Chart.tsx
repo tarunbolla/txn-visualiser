@@ -11,6 +11,8 @@ export interface ChartProps {
   onToggleFlag: (id: string) => void;
   onVisibleTransactionsChange?: (visible: Transaction[]) => void; // NEW PROP
   onResetFlags?: () => void; // Add this prop
+  activeAccounts: string[];
+  onAddActiveAccount: (id: string) => void;
 }
 
 const Chart: React.FC<ChartProps> = ({ 
@@ -21,7 +23,10 @@ const Chart: React.FC<ChartProps> = ({
   onToggleFlag,
   onVisibleTransactionsChange,
   onResetFlags,
+  activeAccounts,
+  onAddActiveAccount,
 }) => {
+  const [pendingAccount, setPendingAccount] = useState<string | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   // Store the current x domain for zooming
@@ -176,23 +181,69 @@ const Chart: React.FC<ChartProps> = ({
           .axisLeft(yScale)
           .tickFormat((id) => accounts.find((a) => a.id === id)?.name || id)
       );
+    // Adjust label position for padding from axis
     yAxis.selectAll("text")
       .attr("font-size", 14)
-      .attr("fill", "#374151");
+      .attr("x", -16) // Move label left for padding
+      .attr("fill", (d) => {
+        const id = d as string;
+        return activeAccounts.includes(id) ? "#2563eb" : "#b0b4bb";
+      })
+      .attr("font-weight", (d) => {
+        const id = d as string;
+        return activeAccounts.includes(id) ? "bold" : "normal";
+      })
+      .each(function(d) {
+        // Word wrap with padding for each tspan
+        const text = d3.select(this);
+        const id = d as string;
+        const label = accounts.find(a => a.id === id)?.name || id;
+        const maxWidth = 120;
+        const words = label.split(/\s+/).reverse();
+        let word: string | undefined;
+        let line: string[] = [];
+        let lineNumber = 0;
+        let tspan = text.text(null).append("tspan").attr("x", -16).attr("y", 0).attr("dy", "0em");
+        while (word = words.pop()) {
+          line.push(word);
+          tspan.text(line.join(" "));
+          if ((tspan.node() as SVGTextElement).getComputedTextLength() > maxWidth && line.length > 1) {
+            line.pop();
+            tspan.text(line.join(" "));
+            line = [word];
+            tspan = text.append("tspan").attr("x", -16).attr("y", 0).attr("dy", `${++lineNumber * 1.1}em`).text(word);
+          }
+        }
+      })
+      .style("cursor", (d) => {
+        const id = d as string;
+        return activeAccounts.includes(id) ? "default" : "pointer";
+      })
+      .on("click", (event, d) => {
+        const id = d as string;
+        if (!activeAccounts.includes(id)) {
+          setPendingAccount(id);
+        }
+      });
 
-    // Add credits/debits below each account label
+    // Add credits/debits below each account label, only for active accounts
     yAxis.selectAll("g.tick").each(function(d) {
       const accountId = d as string;
       const account = accounts.find(a => a.id === accountId);
       if (!account) return;
+      if (!activeAccounts.includes(accountId)) return;
       // Calculate total credits and debits for this account
       const totalCredit = d3.sum(transactions, t => t.to === accountId ? t.amount : 0);
       const totalDebit = d3.sum(transactions, t => t.from === accountId ? t.amount : 0);
-      // Add a second line below the main label, abbreviated format
+      // Place C: D: below the last tspan of the label
+      const labelText = d3.select(this).select("text");
+      const tspans = labelText.selectAll("tspan");
+      const lastTspan = tspans.nodes()[tspans.size() - 1] as SVGTextElement;
+      const lastLineCount = tspans.size();
       d3.select(this)
         .append("text")
-        .attr("x", -8)
-        .attr("y", 18)
+        .attr("x", -16)
+        .attr("y", 18 + (lastLineCount - 1) * 16) // Offset by number of wrapped lines
         .attr("text-anchor", "end")
         .attr("font-size", 11)
         .attr("fill", "#6b7280")
@@ -513,8 +564,23 @@ const Chart: React.FC<ChartProps> = ({
     };
   }, [transactions, initialXDomain]);
 
+  // Modal for account reveal
+  const showModal = !!pendingAccount;
   return (
     <div className="chart-container" ref={containerRef} style={{ position: 'relative' }}>
+      {showModal && (
+        <div className="modal-overlay" style={{ position: 'fixed', top:0, left:0, right:0, bottom:0, background:'rgba(0,0,0,0.2)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center' }}>
+          <div className="modal-content" style={{ background:'#fff', borderRadius:8, boxShadow:'0 2px 16px rgba(0,0,0,0.15)', padding:32, minWidth:320 }}>
+            <div style={{ marginBottom: 16, fontSize: 16 }}>
+              Show transactions for <b>{accounts.find(a => a.id === pendingAccount)?.name || pendingAccount}</b>?
+            </div>
+            <div style={{ display:'flex', gap:12, justifyContent:'flex-end' }}>
+              <button onClick={() => setPendingAccount(null)} style={{ padding:'6px 18px', borderRadius:4, border:'1px solid #d1d5db', background:'#f3f4f6', cursor:'pointer' }}>Cancel</button>
+              <button onClick={() => { if (pendingAccount) { onAddActiveAccount(pendingAccount); setPendingAccount(null); } }} style={{ padding:'6px 18px', borderRadius:4, border:'1px solid #2563eb', background:'#2563eb', color:'#fff', cursor:'pointer' }}>Yes</button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Chart controls top right */}
       <div style={{ position: 'absolute', top: 8, right: 16, zIndex: 2, display: 'flex', gap: 8 }}>
         <button
