@@ -165,7 +165,7 @@ const Chart: React.FC<ChartProps> = ({
       .attr("opacity", 0.3);
 
     // Draw y-axis (accounts)
-    svg
+    const yAxis = svg
       .append("g")
       .attr("class", "y-axis")
       .attr("transform", `translate(${margin.left},0)`)
@@ -173,10 +173,29 @@ const Chart: React.FC<ChartProps> = ({
         d3
           .axisLeft(yScale)
           .tickFormat((id) => accounts.find((a) => a.id === id)?.name || id)
-      )
-      .selectAll("text")
+      );
+    yAxis.selectAll("text")
       .attr("font-size", 14)
       .attr("fill", "#374151");
+
+    // Add credits/debits below each account label
+    yAxis.selectAll("g.tick").each(function(d) {
+      const accountId = d as string;
+      const account = accounts.find(a => a.id === accountId);
+      if (!account) return;
+      // Calculate total credits and debits for this account
+      const totalCredit = d3.sum(transactions, t => t.to === accountId ? t.amount : 0);
+      const totalDebit = d3.sum(transactions, t => t.from === accountId ? t.amount : 0);
+      // Add a second line below the main label, abbreviated format
+      d3.select(this)
+        .append("text")
+        .attr("x", -8)
+        .attr("y", 18)
+        .attr("text-anchor", "end")
+        .attr("font-size", 11)
+        .attr("fill", "#6b7280")
+        .text(`C: ${formatCurrencyShort(totalCredit)} D: ${formatCurrencyShort(totalDebit)}`);
+    });
 
     // Draw x-axis (dates) at the bottom of the chart area
     // Dynamically choose tick interval based on zoom level
