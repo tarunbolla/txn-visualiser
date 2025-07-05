@@ -327,13 +327,13 @@ const Chart: React.FC<ChartProps> = ({
           .attr("fill", labelAmountColorScale(d.amount))
           .attr("fill-opacity", 0.9)
           .attr("rx", 4)
-          .attr("stroke", "#fff")
-          .attr("stroke-width", 0.5);
+          .attr("stroke", d.isFlagged ? "#e11d48" : "#fff") // Red stroke if flagged
+          .attr("stroke-width", d.isFlagged ? 1.5 : 0.5); // Thicker if flagged
 
         if (d.isFlagged) {
           labelGroup
             .append("text")
-            .attr("x", amountBBox.x + amountBBox.width + 6)
+            .attr("x", amountBBox.x + amountBBox.width + 2) // Move flag closer to label
             .attr("y", midY)
             .attr("text-anchor", "start")
             .attr("dominant-baseline", "middle")
