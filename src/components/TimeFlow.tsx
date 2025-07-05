@@ -142,6 +142,15 @@ const TimeFlow: React.FC<TimeFlowProps> = ({
       totalVolume: accountVolumes.get(accountId) || 0
     }));
     
+    // Use single consistent colour for all accounts and flows
+    const singleColour = "#4682B4"; // Steel blue
+    
+    // Assign same colour to all accounts
+    const accountColourMap = new Map<string, string>();
+    uniqueAccounts.forEach((accountId) => {
+      accountColourMap.set(accountId, singleColour);
+    });
+    
     // Aggregate transactions by day and account pair
     const flowMap = new Map<string, FlowBand>();
     filteredTx.forEach(tx => {
@@ -169,25 +178,68 @@ const TimeFlow: React.FC<TimeFlowProps> = ({
     
     const flows = Array.from(flowMap.values());
     
-    // Create flow width scale
-    const maxFlowAmount = Math.max(...flows.map(f => f.amount));
+    // Calculate running balances for each account over time
+    const accountBalances = new Map<string, Array<{date: Date, balance: number, inflow: number, outflow: number}>>();
+    
+    // Initialize balances for all accounts
+    uniqueAccounts.forEach(accountId => {
+      accountBalances.set(accountId, []);
+    });
+    
+    // Sort all flows by date to process chronologically
+    const chronologicalFlows = flows.sort((a, b) => a.date.getTime() - b.date.getTime());
+    
+    // Process each flow to update running balances
+    const currentBalances = new Map<string, number>();
+    uniqueAccounts.forEach(accountId => currentBalances.set(accountId, 0));
+    
+    chronologicalFlows.forEach(flow => {
+      // Update balances
+      const fromBalance = currentBalances.get(flow.fromAccount) || 0;
+      const toBalance = currentBalances.get(flow.toAccount) || 0;
+      
+      currentBalances.set(flow.fromAccount, fromBalance - flow.amount);
+      currentBalances.set(flow.toAccount, toBalance + flow.amount);
+      
+      // Record balance snapshots
+      accountBalances.get(flow.fromAccount)?.push({
+        date: flow.date,
+        balance: currentBalances.get(flow.fromAccount) || 0,
+        inflow: 0,
+        outflow: flow.amount
+      });
+      
+      accountBalances.get(flow.toAccount)?.push({
+        date: flow.date,
+        balance: currentBalances.get(flow.toAccount) || 0,
+        inflow: flow.amount,
+        outflow: 0
+      });
+    });
+    
+    // Create flow width scale based on maximum balance rather than flow amount
+    const maxBalance = Math.max(...Array.from(accountBalances.values()).flat().map(b => Math.abs(b.balance)));
+    const balanceScale = d3.scaleLinear()
+      .domain([0, maxBalance])
+      .range([2, 30]);
+    
     const flowWidthScale = d3.scaleSqrt()
-      .domain([0, maxFlowAmount])
-      .range([2, 40]);
+      .domain([0, Math.max(...flows.map(f => f.amount))])
+      .range([3, 20]);
 
     // Clear previous content
     g.selectAll("*").remove();
     
-    // Draw time axis
+    // Draw time axis with Australian date format
     const xAxis = d3.axisBottom(timeScale)
-      .tickFormat((d) => d3.timeFormat("%m/%d")(d as Date));
+      .tickFormat((d) => d3.timeFormat("%d/%m")(d as Date)); // Australian DD/MM format
     
     g.append("g")
       .attr("class", "time-axis")
       .attr("transform", `translate(0, ${HEIGHT - margin.bottom})`)
       .call(xAxis as any);
     
-    // Draw account lanes
+    // Draw account lanes with balance indicators
     const lanes = g.selectAll<SVGGElement, AccountLane>(".account-lane")
       .data(accountLanes, d => d.id);
     
@@ -195,132 +247,226 @@ const TimeFlow: React.FC<TimeFlowProps> = ({
       .append("g")
       .attr("class", "account-lane");
     
-    // Lane background
+    // Lane background - minimal/transparent
     laneEnter.append("rect")
       .attr("class", "lane-bg")
       .attr("x", margin.left)
       .attr("y", d => d.y - laneHeight / 2)
       .attr("width", WIDTH - margin.left - margin.right)
       .attr("height", laneHeight)
-      .attr("fill", "#f8f9fa")
+      .attr("fill", "none")
       .attr("stroke", "#e9ecef")
-      .attr("stroke-width", 1);
+      .attr("stroke-width", 0.5)
+      .attr("opacity", 0.3);
     
-    // Lane labels
-    laneEnter.append("text")
-      .attr("class", "lane-label")
-      .attr("x", margin.left - 10)
-      .attr("y", d => d.y)
-      .attr("text-anchor", "end")
-      .attr("dominant-baseline", "middle")
-      .style("font-size", "12px")
-      .style("font-weight", "600")
-      .style("fill", "#374151")
-      .text(d => d.name);
-    
-    // Volume labels
-    laneEnter.append("text")
-      .attr("class", "volume-label")
-      .attr("x", margin.left - 10)
-      .attr("y", d => d.y + 15)
-      .attr("text-anchor", "end")
-      .attr("dominant-baseline", "middle")
-      .style("font-size", "10px")
-      .style("fill", "#6b7280")
-      .text(d => formatCurrencyShort(d.totalVolume));
-    
-    // Draw flow bands
-    const flowBands = g.selectAll<SVGPathElement, FlowBand>(".flow-band")
-      .data(flows, d => d.id);
-    
-    flowBands.enter()
-      .append("path")
-      .attr("class", "flow-band")
-      .attr("d", d => {
-        const fromLane = accountLanes.find(lane => lane.id === d.fromAccount);
-        const toLane = accountLanes.find(lane => lane.id === d.toAccount);
-        
-        if (!fromLane || !toLane) return "";
-        
-        const x1 = timeScale(d.date);
-        const x2 = x1 + 120; // Longer flow bands for better curves
-        const y1 = fromLane.y;
-        const y2 = toLane.y;
-        const width = flowWidthScale(d.amount);
-        
-        // Create smooth continuous path with minimal deviation for easy tracing
-        if (Math.abs(y1 - y2) < 5) {
-          // Same or very close account lanes - straight horizontal flow
-          return `M ${x1},${y1 - width/2} 
-                  L ${x2},${y2 - width/2}
-                  L ${x2},${y2 + width/2}
-                  L ${x1},${y1 + width/2} Z`;
-        } else {
-          // Different lanes - gentle tapered flow that's easy to follow
-          const midX = x1 + (x2 - x1) * 0.5; // Midpoint for transition
-          
-          // Create a gentle tapered path that maintains visual continuity
-          return `M ${x1},${y1 - width/2} 
-                  L ${midX},${y1 - width/2}
-                  L ${x2},${y2 - width/2}
-                  L ${x2},${y2 + width/2}
-                  L ${midX},${y1 + width/2}
-                  L ${x1},${y1 + width/2} Z`;
-        }
-      })
-      .attr("fill", d => {
-        // Color by transaction type or amount
-        if (d.amount > maxFlowAmount * 0.7) return "#ef4444"; // High amounts - red
-        if (d.amount > maxFlowAmount * 0.3) return "#f97316"; // Medium amounts - orange
-        return "#3b82f6"; // Low amounts - blue
-      })
-      .attr("fill-opacity", 0.7)
-      .style("cursor", "pointer")
-      .on("click", function(event, d) {
-        event.stopPropagation();
-        
-        setSelectedFlow({
-          transactions: d.transactions,
-          fromAccount: d.fromAccount,
-          toAccount: d.toAccount,
-          date: d.date,
-          amount: d.amount
+    // Draw balance accumulation areas for each account - now as flowing Sankey streams
+    accountBalances.forEach((balanceHistory, accountId) => {
+      if (balanceHistory.length === 0) return;
+      
+      const accountLane = accountLanes.find(lane => lane.id === accountId);
+      if (!accountLane) return;
+      
+      // Create Sankey-style flowing band that shows balance accumulation
+      // Width represents the running balance at each point in time
+      const sankeyPoints: Array<{x: number, y: number, width: number}> = [];
+      
+      balanceHistory.forEach(point => {
+        const x = timeScale(point.date);
+        const balanceWidth = Math.max(2, Math.min(30, Math.abs(point.balance) / maxBalance * 30));
+        sankeyPoints.push({
+          x: x,
+          y: accountLane.y,
+          width: balanceWidth
         });
-      })
-      .on("mouseover", function(event, d) {
-        d3.select(this).attr("fill-opacity", 0.9);
-        
-        // Tooltip
-        const tooltip = d3.select("body").append("div")
-          .attr("class", "flow-tooltip")
-          .style("position", "absolute")
-          .style("background", "rgba(0, 0, 0, 0.8)")
-          .style("color", "white")
-          .style("padding", "8px")
-          .style("border-radius", "4px")
-          .style("font-size", "12px")
-          .style("pointer-events", "none")
-          .style("z-index", "1000");
-        
-        const fromName = accounts.find(a => a.id === d.fromAccount)?.name || d.fromAccount;
-        const toName = accounts.find(a => a.id === d.toAccount)?.name || d.toAccount;
-        
-        tooltip.html(`
-          <strong>${fromName} → ${toName}</strong><br/>
-          Date: ${formatDate(d.date)}<br/>
-          Amount: ${formatCurrencyShort(d.amount)}<br/>
-          Transactions: ${d.transactions.length}
-        `);
-        
-        tooltip.style("left", (event.pageX + 10) + "px")
-          .style("top", (event.pageY - 10) + "px");
-      })
-      .on("mouseout", function() {
-        d3.select(this).attr("fill-opacity", 0.7);
-        d3.selectAll(".flow-tooltip").remove();
       });
+      
+      // Create smooth flowing path that varies in width based on balance
+      if (sankeyPoints.length > 1) {
+        let pathData = "";
+        
+        // Start the path
+        const firstPoint = sankeyPoints[0];
+        pathData += `M ${firstPoint.x},${firstPoint.y - firstPoint.width/2}`;
+        
+        // Create top edge
+        for (let i = 1; i < sankeyPoints.length; i++) {
+          const point = sankeyPoints[i];
+          const prevPoint = sankeyPoints[i-1];
+          const controlX = (prevPoint.x + point.x) / 2;
+          
+          pathData += ` Q ${controlX},${prevPoint.y - prevPoint.width/2} ${point.x},${point.y - point.width/2}`;
+        }
+        
+        // Move to end bottom
+        const lastPoint = sankeyPoints[sankeyPoints.length - 1];
+        pathData += ` L ${lastPoint.x},${lastPoint.y + lastPoint.width/2}`;
+        
+        // Create bottom edge (reverse)
+        for (let i = sankeyPoints.length - 2; i >= 0; i--) {
+          const point = sankeyPoints[i];
+          const nextPoint = sankeyPoints[i+1];
+          const controlX = (point.x + nextPoint.x) / 2;
+          
+          pathData += ` Q ${controlX},${nextPoint.y + nextPoint.width/2} ${point.x},${point.y + point.width/2}`;
+        }
+        
+        pathData += " Z";
+        
+        // Draw the flowing Sankey band
+        g.append("path")
+          .attr("class", "sankey-flow")
+          .attr("d", pathData)
+          .attr("fill", accountColourMap.get(accountId) || "#3b82f6")
+          .attr("fill-opacity", 0.7)
+          .attr("stroke", accountColourMap.get(accountId) || "#3b82f6")
+          .attr("stroke-width", 1)
+          .attr("stroke-opacity", 0.8);
+      }
+    });
     
-    flowBands.exit().remove();
+    // Draw Sankey-style connecting flows between accounts with seamless merging
+    flows.forEach(flow => {
+      const fromLane = accountLanes.find(lane => lane.id === flow.fromAccount);
+      const toLane = accountLanes.find(lane => lane.id === flow.toAccount);
+      
+      if (!fromLane || !toLane) return;
+      
+      const x1 = timeScale(flow.date);
+      const x2 = x1 + 60; // Connection length
+      const y1 = fromLane.y;
+      const y2 = toLane.y;
+      
+      // Get the current balance width at source and destination for seamless connection
+      const sourceBalance = accountBalances.get(flow.fromAccount)?.find(b => b.date.getTime() === flow.date.getTime());
+      const destBalance = accountBalances.get(flow.toAccount)?.find(b => b.date.getTime() === flow.date.getTime());
+      
+      // Calculate actual balance widths to match the account bands exactly
+      const sourceWidth = sourceBalance ? Math.max(2, Math.min(30, Math.abs(sourceBalance.balance) / maxBalance * 30)) : 6;
+      const destWidth = destBalance ? Math.max(2, Math.min(30, Math.abs(destBalance.balance) / maxBalance * 30)) : 6;
+      
+      // Create seamless Sankey path that perfectly connects to account band edges
+      // This mimics the Observable example's approach for seamless merging
+      const curvature = 0.5; // Curvature factor for smooth connections
+      const xi = d3.interpolateNumber(x1, x2);
+      const yi = d3.interpolateNumber(y1, y2);
+      
+      // Create control points for smooth cubic Bezier curves
+      const cp1x = xi(curvature);
+      const cp2x = xi(1 - curvature);
+      
+      // Build the seamless path
+      const sankeyPath = `
+        M ${x1},${y1 - sourceWidth/2}
+        C ${cp1x},${y1 - sourceWidth/2} ${cp2x},${y2 - destWidth/2} ${x2},${y2 - destWidth/2}
+        L ${x2},${y2 + destWidth/2}
+        C ${cp2x},${y2 + destWidth/2} ${cp1x},${y1 + sourceWidth/2} ${x1},${y1 + sourceWidth/2}
+        Z
+      `;
+      
+      // Draw the seamless Sankey connection
+      const sankeyConnection = g.append("path")
+        .attr("class", "sankey-connection")
+        .attr("d", sankeyPath)
+        .attr("fill", accountColourMap.get(flow.fromAccount) || "#3b82f6")
+        .attr("fill-opacity", 0.6) // Slightly higher opacity for better visibility
+        .attr("stroke", "none") // No stroke for truly seamless appearance
+        .style("cursor", "pointer");
+      
+      // Add interactivity to Sankey connections
+      sankeyConnection
+        .on("click", function(event) {
+          event.stopPropagation();
+          setSelectedFlow({
+            transactions: flow.transactions,
+            fromAccount: flow.fromAccount,
+            toAccount: flow.toAccount,
+            date: flow.date,
+            amount: flow.amount
+          });
+        })
+        .on("mouseover", function(event) {
+          d3.select(this)
+            .attr("fill-opacity", 0.8)
+            .attr("stroke-width", 2);
+          
+          // Enhanced tooltip for Sankey
+          const tooltip = d3.select("body").append("div")
+            .attr("class", "sankey-tooltip")
+            .style("position", "absolute")
+            .style("background", "linear-gradient(135deg, rgba(0,0,0,0.9), rgba(30,30,30,0.9))")
+            .style("color", "white")
+            .style("padding", "12px")
+            .style("border-radius", "8px")
+            .style("font-size", "13px")
+            .style("pointer-events", "none")
+            .style("z-index", "1000")
+            .style("box-shadow", "0 4px 12px rgba(0,0,0,0.3)")
+            .style("border", "1px solid rgba(255,255,255,0.1)");
+          
+          const fromName = accounts.find(a => a.id === flow.fromAccount)?.name || flow.fromAccount;
+          const toName = accounts.find(a => a.id === flow.toAccount)?.name || flow.toAccount;
+          
+          tooltip.html(`
+            <div style="font-weight: bold; margin-bottom: 6px; color: #60a5fa;">💰 Money Flow</div>
+            <div style="margin-bottom: 4px;"><strong>${fromName}</strong> → <strong>${toName}</strong></div>
+            <div style="margin-bottom: 4px;">Date: ${formatDate(flow.date)}</div>
+            <div style="margin-bottom: 4px;">Amount: <span style="color: #34d399; font-weight: 600;">${formatCurrencyShort(flow.amount)}</span></div>
+            <div style="margin-bottom: 6px;">Transactions: ${flow.transactions.length}</div>
+            <div style="font-size: 11px; opacity: 0.8; text-align: center; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 4px;">
+              Click to view details
+            </div>
+          `);
+          
+          const rect = tooltip.node()?.getBoundingClientRect();
+          const tooltipWidth = rect?.width || 250;
+          
+          let left = event.pageX + 15;
+          let top = event.pageY - 60;
+          
+          if (left + tooltipWidth > window.innerWidth) {
+            left = event.pageX - tooltipWidth - 15;
+          }
+          if (top < 0) {
+            top = event.pageY + 15;
+          }
+          
+          tooltip.style("left", left + "px").style("top", top + "px");
+        })
+        .on("mouseout", function() {
+          d3.select(this)
+            .attr("fill-opacity", 0.6)
+            .attr("stroke-width", 1);
+          d3.selectAll(".sankey-tooltip").remove();
+        });
+    });
+    
+    // Add account labels
+    accountLanes.forEach(lane => {
+      // Lane labels
+      g.append("text")
+        .attr("class", "lane-label")
+        .attr("x", margin.left - 10)
+        .attr("y", lane.y)
+        .attr("text-anchor", "end")
+        .attr("dominant-baseline", "middle")
+        .style("font-size", "12px")
+        .style("font-weight", "600")
+        .style("fill", "#374151")
+        .text(lane.name);
+      
+      // Volume labels
+      g.append("text")
+        .attr("class", "volume-label")
+        .attr("x", margin.left - 10)
+        .attr("y", lane.y + 15)
+        .attr("text-anchor", "end")
+        .attr("dominant-baseline", "middle")
+        .style("font-size", "10px")
+        .style("fill", "#6b7280")
+        .text(formatCurrencyShort(lane.totalVolume));
+    });
+    
+    // Remove old continuity lines code - no longer needed
     
   }, [transactions, minAmount, maxAmount]);
 

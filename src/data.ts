@@ -8,15 +8,15 @@ export const config = {
   dayOffsetMm: 1.5,
   badgePaddingX: 3,
   badgePaddingY: 1.5,
-  transactionTypeColors: {
+  transactionTypeColours: {
     DEFT: "#3b82f6",
     CASH: "#f59e0b",
     IMT: "#8b5cf6",
     Card: "#10b981",
     Other: "#6b7280",
   },
-  labelAmountBracketColors: ["#FFE0B2", "#FFCC80", "#FFA07A", "#F08080"],
-  defaultArrowColor: "#6b7280",
+  labelAmountBracketColours: ["#FFE0B2", "#FFCC80", "#FFA07A", "#F08080"],
+  defaultArrowColour: "#6b7280",
   normalArrowThickness: 1.5,
   // Tree graph configuration
   treeGraph: {

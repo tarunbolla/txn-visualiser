@@ -73,7 +73,7 @@ const Chart: React.FC<ChartProps> = ({
                              [0, Math.max(1, maxAmount || 1)] : [minAmount, maxAmount];
     const labelAmountColorScale = d3.scaleQuantize<string>()
         .domain(labelColorDomain)
-        .range(config.labelAmountBracketColors);
+        .range(config.labelAmountBracketColours);
 
     // X: time scale
     // const dates = transactions.map((d) => d.parsedDate!); // Not used
@@ -108,7 +108,7 @@ const Chart: React.FC<ChartProps> = ({
 
     // Create arrowhead markers
     const defs = svg.select("defs");
-    Object.entries(config.transactionTypeColors).forEach(([type, color]) => {
+    Object.entries(config.transactionTypeColours).forEach(([type, colour]) => {
       defs
         .append("marker")
         .attr("id", `arrowhead-${type.replace(/\s+/g, '-')}`)
@@ -120,7 +120,7 @@ const Chart: React.FC<ChartProps> = ({
         .attr("orient", "auto")
         .append("path")
         .attr("d", "M 0,-5 L 10 ,0 L 0,5")
-        .attr("fill", color);
+        .attr("fill", colour);
     });
     defs
       .append("marker")
@@ -133,7 +133,7 @@ const Chart: React.FC<ChartProps> = ({
       .attr("orient", "auto")
       .append("path")
       .attr("d", "M 0,-5 L 10 ,0 L 0,5")
-      .attr("fill", config.defaultArrowColor);
+      .attr("fill", config.defaultArrowColour);
 
     // Draw grid lines first (background)
     const gridGroup = svg.append("g").attr("class", "grid-background");
@@ -361,9 +361,9 @@ const Chart: React.FC<ChartProps> = ({
         const labelIndex = txLabelIndexMap.get(d.id) || 0;
         const labelPct = labelPositions[labelIndex % labelPositions.length];
         const labelY = fromY + (toY - fromY) * labelPct;
-        const arrowColor = config.transactionTypeColors[d.type as keyof typeof config.transactionTypeColors] || config.defaultArrowColor;
+        const arrowColour = config.transactionTypeColours[d.type as keyof typeof config.transactionTypeColours] || config.defaultArrowColour;
         const markerType = d.type || "Other";
-        const arrowMarkerId = config.transactionTypeColors[markerType as keyof typeof config.transactionTypeColors] 
+        const arrowMarkerId = config.transactionTypeColours[markerType as keyof typeof config.transactionTypeColours] 
             ? `arrowhead-${markerType.replace(/\s+/g, '-')}` 
             : 'arrowhead-default';
 
@@ -411,7 +411,7 @@ const Chart: React.FC<ChartProps> = ({
           .attr("y1", fromY)
           .attr("x2", x)
           .attr("y2", toY)
-          .attr("stroke", arrowColor)
+          .attr("stroke", arrowColour)
           .attr("stroke-width", config.normalArrowThickness)
           .attr("fill", "none")
           .attr("marker-end", `url(#${arrowMarkerId})`)
@@ -478,7 +478,7 @@ const Chart: React.FC<ChartProps> = ({
 
     // Add legend at bottom (positioned to avoid x-axis overlap)
     const legendY = height - margin.bottom + 45; // Position legend below x-axis with spacing
-    const legendItems = Object.entries(config.transactionTypeColors);
+    const legendItems = Object.entries(config.transactionTypeColours);
     const legendSpacing = Math.min(150, (width - margin.left - margin.right) / legendItems.length);
     const legend = svg
       .append("g")
