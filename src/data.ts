@@ -18,6 +18,11 @@ export const config = {
   labelAmountBracketColors: ["#FFE0B2", "#FFCC80", "#FFA07A", "#F08080"],
   defaultArrowColor: "#6b7280",
   normalArrowThickness: 1.5,
+  // Tree graph configuration
+  treeGraph: {
+    maxDepth: 8,          // Maximum depth for tree expansion (increased to show full laundering chain)
+    maxChildrenPerNode: 12, // Maximum children per node to prevent overcrowding (increased for more visibility)
+  },
 };
 
 import * as d3 from "d3";
@@ -73,9 +78,13 @@ export const accounts: Account[] = [
   { id: "ELEC001", name: "JB Hi-Fi Electronics" },
   { id: "ATM001", name: "Westpac ATM 123" },
   { id: "SHELL1", name: "Shell Pty Ltd" },
+  { id: "SHELL2", name: "Another Shell Co" },
   { id: "MULE1", name: "Mule Account" },
+  { id: "MULE2", name: "Secondary Mule" },
   { id: "CAR001", name: "Luxury Car Dealer" },
   { id: "JEWL001", name: "Sydney Jewellers" },
+  { id: "PROP001", name: "Real Estate Agency" },
+  { id: "ART001", name: "Art Gallery" },
 ];
 
 export const rawTransactionsData: Transaction[] = [
@@ -229,8 +238,14 @@ export const rawTransactionsData: Transaction[] = [
   { date: "2024-09-15", from: "A1001", to: "A1002", amount: 12400, type: "CASH", description: "Layering Transfer 1", id: "tx-ML2" },
   { date: "2024-09-15", from: "A1002", to: "SHELL1", amount: 12300, type: "IMT", description: "Layering Transfer 2 (to Shell)", id: "tx-ML3" },
   { date: "2024-09-16", from: "SHELL1", to: "MULE1", amount: 12200, type: "IMT", description: "Layering Transfer 3 (to Mule)", id: "tx-ML4" },
-  // Step 3: Integration - high-value purchase
-  { date: "2024-09-17", from: "MULE1", to: "CAR001", amount: 12000, type: "DEFT", description: "Luxury Car Purchase (Integration)", id: "tx-ML5" },
-  // Additional: Jewelry purchase
-  { date: "2024-09-18", from: "MULE1", to: "JEWL001", amount: 2000, type: "DEFT", description: "Jewelry Purchase (Integration)", id: "tx-ML6" },
+  // Extended layering chain
+  { date: "2024-09-16", from: "MULE1", to: "SHELL2", amount: 6000, type: "IMT", description: "Layering Transfer 4 (to Shell 2)", id: "tx-ML4a" },
+  { date: "2024-09-16", from: "SHELL2", to: "MULE2", amount: 5900, type: "IMT", description: "Layering Transfer 5 (to Mule 2)", id: "tx-ML4b" },
+  // Step 3: Integration - high-value purchases through multiple channels
+  { date: "2024-09-17", from: "MULE1", to: "CAR001", amount: 6000, type: "DEFT", description: "Luxury Car Purchase (Integration)", id: "tx-ML5" },
+  { date: "2024-09-17", from: "CAR001", to: "PROP001", amount: 5800, type: "DEFT", description: "Property Investment (Integration)", id: "tx-ML5a" },
+  { date: "2024-09-18", from: "MULE2", to: "JEWL001", amount: 3000, type: "DEFT", description: "Jewelry Purchase (Integration)", id: "tx-ML6" },
+  { date: "2024-09-18", from: "JEWL001", to: "ART001", amount: 2800, type: "DEFT", description: "Art Purchase (Integration)", id: "tx-ML6a" },
+  // Additional structuring 
+  { date: "2024-09-19", from: "MULE2", to: "A1001", amount: 2800, type: "IMT", description: "Return Transfer (Layering)", id: "tx-ML7" },
 ];
