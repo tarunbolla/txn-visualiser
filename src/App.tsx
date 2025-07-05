@@ -3,6 +3,7 @@ import Chart from "./components/Chart";
 import Controls from "./components/Controls";
 import TransactionsTable from "./components/TransactionsTable";
 import Tooltip from "./components/Tooltip";
+import TreeGraph from "./components/TreeGraph";
 import { rawTransactionsData, accounts, parseDate } from "./data";
 import type { Transaction } from "./data";
 import "./App.css";
@@ -43,6 +44,7 @@ function App() {
   // Main state
   const [filters, setFilters] = useState<Filters>({});
   const [page, setPage] = useState(1);
+  const [visualization, setVisualization] = useState<'flow' | 'tree'>("flow");
 
   const [transactions, setTransactions] = useState(() =>
     rawTransactionsData.map((tx) => ({
@@ -115,6 +117,13 @@ function App() {
   };
   const handlePageChange = (newPage: number) => setPage(newPage);
 
+  // Get stable min/max for amount range for TreeGraph (based on all transactions, not filtered)
+  const [minAmount, maxAmount] = useMemo(() => {
+    if (!transactions.length) return [0, 10000];
+    const vals = transactions.map((t) => t.amount);
+    return [Math.min(...vals), Math.max(...vals)];
+  }, [transactions]);
+
   return (
     <div className="app-root">
       <header className="app-header">
@@ -135,38 +144,61 @@ function App() {
             transactions={transactions}
             accountFlows={pairFlowsObj}
           />
+          <div style={{ marginLeft: 24, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <label htmlFor="viz-mode">View:</label>
+            <select
+              id="viz-mode"
+              value={visualization}
+              onChange={e => setVisualization(e.target.value as 'flow' | 'tree')}
+              style={{ fontSize: 14, padding: '2px 8px' }}
+            >
+              <option value="flow">Flow Chart</option>
+              <option value="tree">Tree Graph</option>
+            </select>
+          </div>
         </div>
       </div>
 
       <div className="chart-section">
-        <Chart
-          transactions={activeFilteredTransactions}
-          accounts={accounts}
-          onShowTooltip={handleShowTooltip}
-          onHideTooltip={handleHideTooltip}
-          onToggleFlag={handleToggleFlag}
-          onVisibleTransactionsChange={setVisibleTransactions}
-          onResetFlags={() => {
-            setTransactions(currentTransactions =>
-              currentTransactions.map(tx => ({ ...tx, isFlagged: false }))
-            );
-          }}
-          activeAccounts={activeAccounts}
-          onAddActiveAccount={(id) => setActiveAccounts((prev) => prev.includes(id) ? prev : [...prev, id])}
-        />
+        {visualization === 'flow' ? (
+          <Chart
+            transactions={activeFilteredTransactions}
+            accounts={accounts}
+            onShowTooltip={handleShowTooltip}
+            onHideTooltip={handleHideTooltip}
+            onToggleFlag={handleToggleFlag}
+            onVisibleTransactionsChange={setVisibleTransactions}
+            onResetFlags={() => {
+              setTransactions(currentTransactions =>
+                currentTransactions.map(tx => ({ ...tx, isFlagged: false }))
+              );
+            }}
+            activeAccounts={activeAccounts}
+            onAddActiveAccount={(id) => setActiveAccounts((prev) => prev.includes(id) ? prev : [...prev, id])}
+          />
+        ) : (
+          <TreeGraph
+            transactions={filteredTransactions}
+            activeAccount={activeAccounts[0]}
+            minAmount={filters.amountRange?.[0] || minAmount}
+            maxAmount={filters.amountRange?.[1] || maxAmount}
+          />
+        )}
       </div>
 
       <div className="table-section">
-        <div className="grid-container">
-          <TransactionsTable
-            transactions={paginatedTransactions}
-            accounts={accounts}
-            page={page}
-            totalPages={totalPages}
-            onPageChange={handlePageChange}
-            onToggleFlag={handleToggleFlag}
-          />
-        </div>
+        {visualization === 'flow' && (
+          <div className="grid-container">
+            <TransactionsTable
+              transactions={paginatedTransactions}
+              accounts={accounts}
+              page={page}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+              onToggleFlag={handleToggleFlag}
+            />
+          </div>
+        )}
       </div>
 
       <Tooltip 
