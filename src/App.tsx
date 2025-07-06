@@ -204,6 +204,7 @@ function App() {
                 (window as any).__treeSvg.call((window as any).__treeZoom.transform, (window as any).d3?.zoomIdentity || {});
               }
             }}
+            onToggleFlag={handleToggleFlag}
           />
         ) : (
           <TimeFlow

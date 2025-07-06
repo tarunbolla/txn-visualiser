@@ -11,6 +11,7 @@ interface TreeGraphProps {
   maxAmount: number;
   onActiveAccountChange?: (accountId: string) => void;
   onResetView?: () => void; // Add this prop
+  onToggleFlag?: (id: string) => void; // <-- Add this prop
 }
 
 interface TreeNode {
@@ -129,7 +130,8 @@ const TreeGraph: React.FC<TreeGraphProps> = ({
   minAmount, 
   maxAmount, 
   onActiveAccountChange,
-  onResetView
+  onResetView,
+  onToggleFlag
 }) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -692,12 +694,15 @@ const TreeGraph: React.FC<TreeGraphProps> = ({
               </button>
             </div>
             <TransactionsTable
-              transactions={selectedNode.transactions}
+              transactions={selectedNode.transactions.map(tx =>
+                // Find the canonical transaction object by ID from the main transactions prop
+                transactions.find(t => t.id === tx.id) || tx
+              )}
               accounts={accounts}
               page={1}
               totalPages={1}
               onPageChange={() => {}}
-              onToggleFlag={() => {}}
+              onToggleFlag={onToggleFlag || (() => {})}
             />
           </div>
         </div>
