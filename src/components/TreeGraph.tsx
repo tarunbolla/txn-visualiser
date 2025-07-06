@@ -10,6 +10,7 @@ interface TreeGraphProps {
   minAmount: number;
   maxAmount: number;
   onActiveAccountChange?: (accountId: string) => void;
+  onResetView?: () => void; // Add this prop
 }
 
 interface TreeNode {
@@ -127,7 +128,8 @@ const TreeGraph: React.FC<TreeGraphProps> = ({
   activeAccount, 
   minAmount, 
   maxAmount, 
-  onActiveAccountChange 
+  onActiveAccountChange,
+  onResetView
 }) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -199,6 +201,8 @@ const TreeGraph: React.FC<TreeGraphProps> = ({
 
     zoomRef.current = zoom;
     svg.call(zoom as any);
+    (window as any).__treeZoom = zoom;
+    (window as any).__treeSvg = svg;
     
     // Cleanup function
     return () => {
@@ -557,6 +561,26 @@ const TreeGraph: React.FC<TreeGraphProps> = ({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "16px", position: "relative" }}>
+      <div style={{ position: 'absolute', top: 8, right: 16, zIndex: 2, display: 'flex', gap: 8 }}>
+        <button
+          style={{
+            background: '#f3f4f6',
+            border: '1px solid #d1d5db',
+            borderRadius: 4,
+            padding: '4px 12px',
+            fontSize: 13,
+            color: '#374151',
+            cursor: 'pointer',
+            boxShadow: '0 1px 2px rgba(0,0,0,0.03)'
+          }}
+          onClick={() => {
+            if (onResetView) onResetView();
+          }}
+          title="Reset zoom and pan"
+        >
+          Reset View
+        </button>
+      </div>
       <div 
         ref={containerRef}
         style={{ 

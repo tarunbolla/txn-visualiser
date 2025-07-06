@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useRef } from "react";
+import * as d3 from "d3";
 import Chart from "./components/Chart";
 import Controls from "./components/Controls";
 import TransactionsTable from "./components/TransactionsTable";
@@ -182,6 +183,13 @@ function App() {
             }}
             activeAccounts={activeAccounts}
             onAddActiveAccount={(id) => setActiveAccounts((prev) => prev.includes(id) ? prev : [...prev, id])}
+            onResetView={() => {
+              setActiveAccounts([accounts[0]?.id]);
+              // Also reset D3 zoom transform if present
+              if ((window as any).__chartZoom && (window as any).__chartSvg) {
+                (window as any).__chartSvg.call((window as any).__chartZoom.transform, d3.zoomIdentity);
+              }
+            }}
           />
         ) : visualization === 'tree' ? (
           <TreeGraph
@@ -190,6 +198,12 @@ function App() {
             minAmount={filters.amountRange?.[0] || minAmount}
             maxAmount={filters.amountRange?.[1] || maxAmount}
             onActiveAccountChange={handleActiveAccountChange}
+            onResetView={() => {
+              // Reset zoom for TreeGraph
+              if ((window as any).__treeZoom && (window as any).__treeSvg) {
+                (window as any).__treeSvg.call((window as any).__treeZoom.transform, (window as any).d3?.zoomIdentity || {});
+              }
+            }}
           />
         ) : (
           <TimeFlow
@@ -198,6 +212,12 @@ function App() {
             minAmount={filters.amountRange?.[0] || minAmount}
             maxAmount={filters.amountRange?.[1] || maxAmount}
             onToggleFlag={handleToggleFlag}
+            onResetView={() => {
+              // Reset zoom for TimeFlow
+              if ((window as any).__timeflowZoom && (window as any).__timeflowSvg) {
+                (window as any).__timeflowSvg.call((window as any).__timeflowZoom.transform, (window as any).d3?.zoomIdentity || {});
+              }
+            }}
           />
         )}
       </div>

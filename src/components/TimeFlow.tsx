@@ -10,6 +10,7 @@ interface TimeFlowProps {
   minAmount: number;
   maxAmount: number;
   onToggleFlag: (id: string) => void;
+  onResetView?: () => void; // Add this prop
 }
 
 interface FlowBand {
@@ -33,7 +34,8 @@ const TimeFlow: React.FC<TimeFlowProps> = ({
   allTransactions, 
   minAmount, 
   maxAmount, 
-  onToggleFlag 
+  onToggleFlag,
+  onResetView
 }) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -78,6 +80,8 @@ const TimeFlow: React.FC<TimeFlowProps> = ({
 
     zoomRef.current = zoom;
     svg.call(zoom as any);
+    (window as any).__timeflowZoom = zoom;
+    (window as any).__timeflowSvg = svg;
     
     // Cleanup function
     return () => {
@@ -471,7 +475,27 @@ const TimeFlow: React.FC<TimeFlowProps> = ({
   }, [transactions, minAmount, maxAmount]);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "16px", position: "relative" }}>
+      <div style={{ position: 'absolute', top: 8, right: 16, zIndex: 3, display: 'flex', gap: 8 }}>
+        <button
+          style={{
+            background: '#f3f4f6',
+            border: '1px solid #d1d5db',
+            borderRadius: 4,
+            padding: '4px 12px',
+            fontSize: 13,
+            color: '#374151',
+            cursor: 'pointer',
+            boxShadow: '0 1px 2px rgba(0,0,0,0.03)'
+          }}
+          onClick={() => {
+            if (onResetView) onResetView();
+          }}
+          title="Reset zoom and pan"
+        >
+          Reset View
+        </button>
+      </div>
       <div 
         ref={containerRef}
         style={{ 
@@ -483,7 +507,8 @@ const TimeFlow: React.FC<TimeFlowProps> = ({
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-          overflow: "hidden"
+          overflow: "hidden",
+          position: "relative"
         }}
         onClick={() => setSelectedFlow(null)} // Clear selection when clicking background
       >

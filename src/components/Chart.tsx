@@ -13,6 +13,7 @@ export interface ChartProps {
   onResetFlags?: () => void; // Add this prop
   activeAccounts: string[];
   onAddActiveAccount: (id: string) => void;
+  onResetView?: () => void; // Add this prop
 }
 
 const Chart: React.FC<ChartProps> = ({ 
@@ -25,6 +26,7 @@ const Chart: React.FC<ChartProps> = ({
   onResetFlags,
   activeAccounts,
   onAddActiveAccount,
+  onResetView,
 }) => {
   const [pendingAccount, setPendingAccount] = useState<string | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
@@ -245,8 +247,10 @@ const Chart: React.FC<ChartProps> = ({
         .attr("x", -16)
         .attr("y", 14 + (lastLineCount - 1) * 16) // Offset by number of wrapped lines
         .attr("text-anchor", "end")
-        .attr("font-size", 11)
-        .attr("fill", "#6b7280")
+        .attr("dominant-baseline", "middle")
+        .style("font-size", "10px")
+        .style("font-weight", "400")
+        .style("fill", "#6b7280")
         .text(`(C: ${formatCurrencyShort(totalCredit)} D: ${formatCurrencyShort(totalDebit)})`);
     });
     
@@ -598,16 +602,11 @@ const Chart: React.FC<ChartProps> = ({
             cursor: 'pointer',
             boxShadow: '0 1px 2px rgba(0,0,0,0.03)'
           }}
-          onClick={() => {
-            setXDomain(null);
-            // Also reset D3 zoom transform
-            if ((window as any).__chartZoom && (window as any).__chartSvg) {
-              (window as any).__chartSvg.call((window as any).__chartZoom.transform, d3.zoomIdentity);
-            }
-          }}
-          title="Reset zoom and pan"
+          onClick={onResetFlags}
+          title="Clear all transaction flags"
+          disabled={!onResetFlags}
         >
-          Reset View
+          Reset Flags
         </button>
         <button
           style={{
@@ -620,11 +619,14 @@ const Chart: React.FC<ChartProps> = ({
             cursor: 'pointer',
             boxShadow: '0 1px 2px rgba(0,0,0,0.03)'
           }}
-          onClick={onResetFlags}
-          title="Clear all transaction flags"
-          disabled={!onResetFlags}
+          onClick={() => {
+            if (onResetView) {
+              onResetView();
+            }
+          }}
+          title="Reset zoom and pan"
         >
-          Reset Flags
+          Reset View
         </button>
       </div>
       <svg ref={svgRef} />
