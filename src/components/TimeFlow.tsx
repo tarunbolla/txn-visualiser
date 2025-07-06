@@ -368,10 +368,11 @@ const TimeFlow: React.FC<TimeFlowProps> = ({
       `;
       
       // Draw the seamless Sankey connection
+      const isFlagged = flow.transactions.some(tx => tx.isFlagged);
       const sankeyConnection = g.append("path")
         .attr("class", "sankey-connection")
         .attr("d", sankeyPath)
-        .attr("fill", accountColourMap.get(flow.fromAccount) || "#3b82f6")
+        .attr("fill", isFlagged ? "#e11d48" : (accountColourMap.get(flow.fromAccount) || "#3b82f6"))
         .attr("fill-opacity", 0.6) // Slightly higher opacity for better visibility
         .attr("stroke", "none") // No stroke for truly seamless appearance
         .style("cursor", "pointer");

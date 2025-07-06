@@ -265,7 +265,7 @@ const TreeGraph: React.FC<TreeGraphProps> = ({
       transactions: Transaction[]
     }> = [];
     const allLinks: Array<{id: string, d: string}> = [];
-    const allTexts: Array<{id: string, x: number, y: number, text: string, anchor: string, fontSize: string, fill: string, fontWeight?: string}> = [];
+    const allTexts: Array<{id: string, x: number, y: number, text: string, anchor: string, fontSize: string, fill: string, fontWeight?: string, flagged?: boolean}> = [];
 
     // Outgoing (right) subtree - shows where money flows TO from the active account
     if (treeData.children[0]) {
@@ -332,7 +332,8 @@ const TreeGraph: React.FC<TreeGraphProps> = ({
           text: `${formatCurrencyShort(d.data.value)} (${d.data.transactions.length})`,
           anchor: "start",
           fontSize: "9px",
-          fill: "#666"
+          fill: "#666",
+          flagged: d.data.transactions.some(tx => tx.isFlagged) // <-- add flagged property
         });
       });
     }
@@ -402,7 +403,8 @@ const TreeGraph: React.FC<TreeGraphProps> = ({
           text: `${formatCurrencyShort(d.data.value)} (${d.data.transactions.length})`,
           anchor: "end",
           fontSize: "9px",
-          fill: "#666"
+          fill: "#666",
+          flagged: d.data.transactions.some(tx => tx.isFlagged) // <-- add flagged property
         });
       });
     }
@@ -429,7 +431,8 @@ const TreeGraph: React.FC<TreeGraphProps> = ({
       anchor: "middle",
       fontSize: "12px",
       fill: "#000",
-      fontWeight: "bold"
+      fontWeight: "bold",
+      flagged: treeData.transactions.some(tx => tx.isFlagged)
     });
 
     // Use D3 data joins for smooth updates with stable IDs
@@ -534,7 +537,22 @@ const TreeGraph: React.FC<TreeGraphProps> = ({
       .style("font-size", d => d.fontSize)
       .style("fill", d => d.fill)
       .style("font-weight", d => d.fontWeight || "normal")
-      .text(d => d.text);
+      .text(d => d.text)
+      .each(function(d) {
+        // Add red flag icon if flagged
+        if (d.flagged) {
+          const bbox = (this as SVGTextElement).getBBox();
+          d3.select(this.parentNode as SVGGElement)
+            .append("text")
+            .attr("x", d.anchor === "end" ? d.x - bbox.width - 16 : d.x + bbox.width + 6)
+            .attr("y", d.y)
+            .attr("text-anchor", "middle")
+            .attr("alignment-baseline", "middle")
+            .style("font-size", "13px")
+            .style("fill", "#e11d48")
+            .text("\u2691"); // Unicode triangular flag
+        }
+      });
     
     texts.exit().remove();
   }, [transactions, minAmount, maxAmount, selectedNode, activeAccount]); // Add selectedNode to update highlighting
