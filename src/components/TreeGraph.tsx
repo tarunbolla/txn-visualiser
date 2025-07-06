@@ -19,6 +19,7 @@ interface TreeNode {
   value: number;
   children: TreeNode[];
   parentId?: string; // Track the parent node ID for specific path context
+  transactions: Transaction[]; // Store relevant transaction objects for this node
 }
 
 function aggregateEdges(transactions: Transaction[], direction: "in" | "out", accountId: string) {
@@ -42,38 +43,58 @@ function aggregateEdges(transactions: Transaction[], direction: "in" | "out", ac
 }
 
 // Recursively build outgoing or incoming tree
-function buildDirectionalTree(transactions: Transaction[], accountId: string, direction: "in" | "out", visited = new Set<string>(), depth = 0, parentId?: string): TreeNode | null {
+function buildDirectionalTree(
+  transactions: Transaction[],
+  accountId: string,
+  direction: "in" | "out",
+  visited = new Set<string>(),
+  depth = 0,
+  parentId?: string
+): TreeNode | null {
   if (visited.has(accountId) || depth > config.treeGraph.maxDepth) return null; // Prevent cycles and limit depth
   visited.add(accountId);
-  
-  // For a node in the tree, calculate its value based on transactions with its parent
+
   let nodeValue = 0;
+  let nodeTxs: Transaction[] = [];
   if (parentId) {
-    // Calculate value based on transactions between parent and this node in the tree direction
     if (direction === "out") {
       // Outgoing tree: value is sum of transactions FROM parent TO this node
-      nodeValue = transactions
-        .filter(tx => tx.from === parentId && tx.to === accountId)
-        .reduce((sum, tx) => sum + tx.amount, 0);
+      const txs = transactions.filter(tx => tx.from === parentId && tx.to === accountId);
+      nodeValue = txs.reduce((sum, tx) => sum + tx.amount, 0);
+      nodeTxs = txs;
     } else {
       // Incoming tree: value is sum of transactions FROM this node TO parent
-      nodeValue = transactions
-        .filter(tx => tx.from === accountId && tx.to === parentId)
-        .reduce((sum, tx) => sum + tx.amount, 0);
+      const txs = transactions.filter(tx => tx.from === accountId && tx.to === parentId);
+      nodeValue = txs.reduce((sum, tx) => sum + tx.amount, 0);
+      nodeTxs = txs;
+    }
+  } else if (depth === 0) {
+    // This is the root of the subtree (direct child of main root)
+    if (direction === "out") {
+      // Total debits (outgoing) from this account
+      const txs = transactions.filter(tx => tx.from === accountId);
+      nodeValue = txs.reduce((sum, tx) => sum + tx.amount, 0);
+      nodeTxs = txs;
+    } else {
+      // Total credits (incoming) to this account
+      const txs = transactions.filter(tx => tx.to === accountId);
+      nodeValue = txs.reduce((sum, tx) => sum + tx.amount, 0);
+      nodeTxs = txs;
     }
   }
-  
+
   // Find children - accounts this node connects to in the tree direction
   const agg = aggregateEdges(transactions, direction, accountId);
   if (agg.length === 0 && !parentId) return null; // No connections for root level
-  
+
   const newVisited = new Set(visited);
   return {
     id: accountId,
     name: accounts.find((a) => a.id === accountId)?.name || accountId,
     direction,
-    value: nodeValue, // Use calculated parent-child value, not total aggregation
+    value: nodeValue,
     parentId,
+    transactions: nodeTxs,
     children: agg
       .slice(0, config.treeGraph.maxChildrenPerNode) // Limit children per node
       .map((a) => buildDirectionalTree(transactions, a.id, direction, newVisited, depth + 1, accountId))
@@ -87,11 +108,16 @@ function buildFullTree(transactions: Transaction[], accountId: string): TreeNode
   // Build incoming tree (left side): accounts that send money TO the active account  
   const inTree = buildDirectionalTree(transactions, accountId, "in");
   
+  // For the root node, collect all transactions involving the account
+  const allTxs = transactions.filter(tx => tx.from === accountId || tx.to === accountId);
+
   return {
     id: accountId,
     name: accounts.find((a) => a.id === accountId)?.name || accountId,
     direction: "root",
     value: 0,
+    parentId: undefined,
+    transactions: allTxs,
     children: [outTree, inTree].filter((child): child is TreeNode => child !== null),
   };
 }
@@ -126,45 +152,23 @@ const TreeGraph: React.FC<TreeGraphProps> = ({
     accountName: string;
   } | null>(null);
 
-  // Function to get transactions for a specific node based on its parent relationship
-  const getNodeTransactions = (accountId: string, direction: "in" | "out", parentId: string | undefined, filteredTx: Transaction[]): Transaction[] => {
-    
-    if (direction === "out") {
-      // For outgoing nodes, find transactions from the parent to this account
-      if (parentId) {
-        const parentToChild = filteredTx.filter(tx => tx.from === parentId && tx.to === accountId);
-        return parentToChild;
-      } else {
-        // Root level outgoing - show transactions from active account to this account
-        const direct = filteredTx.filter(tx => tx.from === activeAccount && tx.to === accountId);
-        return direct;
-      }
+  // Update node click handler to use transactionIds
+  const handleNodeClick = (
+    accountId: string,
+    direction: "in" | "out" | "root",
+    parentId: string | undefined,
+    filteredTx: Transaction[],
+    nodeTransactions?: Transaction[]
+  ) => {
+    let txs: Transaction[] = [];
+    if (nodeTransactions) {
+      txs = nodeTransactions;
+    } else if (direction === "root") {
+      txs = filteredTx.filter(tx => tx.from === activeAccount || tx.to === activeAccount);
     } else {
-      // For incoming nodes, find transactions from this account to the parent
-      if (parentId) {
-        const childToParent = filteredTx.filter(tx => tx.from === accountId && tx.to === parentId);
-        return childToParent;
-      } else {
-        // Root level incoming - show transactions from this account to active account
-        const direct = filteredTx.filter(tx => tx.from === accountId && tx.to === activeAccount);
-        return direct;
-      }
+      txs = [];
     }
-  };
-
-  // Function to handle node click with parent information
-  const handleNodeClick = (accountId: string, direction: "in" | "out" | "root", parentId: string | undefined, filteredTx: Transaction[]) => {
-    
-    if (direction === "root") {
-      // For root node, show all transactions involving the active account
-      const rootTransactions = filteredTx.filter(tx => 
-        tx.from === activeAccount || tx.to === activeAccount
-      );
-      setSelectedNode({ accountId, direction, transactions: rootTransactions });
-    } else {
-      const nodeTransactions = getNodeTransactions(accountId, direction, parentId, filteredTx);
-      setSelectedNode({ accountId, direction, parentId, transactions: nodeTransactions });
-    }
+    setSelectedNode({ accountId, direction, parentId, transactions: txs });
   };
 
   // Initialize zoom behavior once
@@ -253,7 +257,8 @@ const TreeGraph: React.FC<TreeGraphProps> = ({
       strokeWidth: number,
       accountId: string,
       parentId?: string,
-      direction: "in" | "out" | "root"
+      direction: "in" | "out" | "root",
+      transactions: Transaction[]
     }> = [];
     const allLinks: Array<{id: string, d: string}> = [];
     const allTexts: Array<{id: string, x: number, y: number, text: string, anchor: string, fontSize: string, fill: string, fontWeight?: string}> = [];
@@ -302,7 +307,8 @@ const TreeGraph: React.FC<TreeGraphProps> = ({
           strokeWidth: 1.5,
           accountId: d.data.id,
           parentId: d.data.parentId,
-          direction: "out"
+          direction: "out",
+          transactions: d.data.transactions // <-- attach transactionIds
         });
         
         allTexts.push({
@@ -319,7 +325,7 @@ const TreeGraph: React.FC<TreeGraphProps> = ({
           id: `out-value-${d.data.id}-${i}`,
           x: d.y! + 8,
           y: d.x! + 12,
-          text: formatCurrencyShort(d.data.value),
+          text: `${formatCurrencyShort(d.data.value)} (${d.data.transactions.length})`,
           anchor: "start",
           fontSize: "9px",
           fill: "#666"
@@ -371,7 +377,8 @@ const TreeGraph: React.FC<TreeGraphProps> = ({
           strokeWidth: 1.5,
           accountId: d.data.id,
           parentId: d.data.parentId,
-          direction: "in"
+          direction: "in",
+          transactions: d.data.transactions // <-- attach transactionIds
         });
         
         allTexts.push({
@@ -388,7 +395,7 @@ const TreeGraph: React.FC<TreeGraphProps> = ({
           id: `in-value-${d.data.id}-${i}`,
           x: d.y! - 8,
           y: d.x! + 12,
-          text: formatCurrencyShort(d.data.value),
+          text: `${formatCurrencyShort(d.data.value)} (${d.data.transactions.length})`,
           anchor: "end",
           fontSize: "9px",
           fill: "#666"
@@ -406,7 +413,8 @@ const TreeGraph: React.FC<TreeGraphProps> = ({
       stroke: "#000",
       strokeWidth: 2,
       accountId: activeAccount,
-      direction: "root"
+      direction: "root",
+      transactions: treeData.transactions // <-- attach transactionIds
     });
     
     allTexts.push({
@@ -484,7 +492,7 @@ const TreeGraph: React.FC<TreeGraphProps> = ({
         event.stopPropagation();
         
         // Use the node data which now includes parent information
-        handleNodeClick(d.accountId, d.direction, d.parentId, filteredTx);
+        handleNodeClick(d.accountId, d.direction, d.parentId, filteredTx, d.transactions);
       })
       .on("contextmenu", function(event, d) {
         event.preventDefault();
