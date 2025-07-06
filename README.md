@@ -1,69 +1,83 @@
-# React + TypeScript + Vite
+# Transaction Visualiser
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern, interactive transaction visualisation tool for financial investigations, built with React, Vite, TypeScript, and D3.js. This project visualises account transactions as time flows, tree graphs, and summary charts, supporting advanced interactivity and red-flag surfacing for suspicious activity.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **TimeFlow Chart**: Visualises money flows between accounts over time using a Sankey-style diagram. Bands are colored red if any transaction in the flow is flagged.
+- **TreeGraph**: Shows incoming and outgoing transaction trees for a selected account. Red flag icons (🚩) appear next to transaction counts if any transaction in a node is flagged.
+- **Summary Chart**: Overview of credits, debits, and total volume with consistent axis and label styling.
+- **Interactivity**:
+  - Filter by amount range
+  - Context menus for focusing on accounts
+  - Flag/unflag transactions
+  - Pagination for transaction tables
+  - Reset View for zoom/pan
+- **Consistent UI**: Unified axis label styling and button placement across all charts.
+- **TypeScript**: Full type safety for all data and components.
 
-## Expanding the ESLint configuration
+## Getting Started
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Prerequisites
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- Node.js (v16+ recommended)
+- npm or yarn
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+### Installation
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```sh
+npm install
+# or
+yarn install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Running the App
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```sh
+npm run dev
+# or
+yarn dev
 ```
+
+Open your browser to the local server URL (usually http://localhost:5173) to view the app.
+
+### Building for Production
+
+```sh
+npm run build
+# or
+yarn build
+```
+
+### Linting & Formatting
+
+```sh
+npm run lint
+```
+
+## Project Structure
+
+- `src/components/Chart.tsx` — Summary chart (credits, debits, volume)
+- `src/components/TimeFlow.tsx` — Time-based flow visualisation (Sankey)
+- `src/components/TreeGraph.tsx` — Transaction tree visualisation
+- `src/components/Controls.tsx` — UI controls (filters, sliders)
+- `src/data.ts` — Data types, config, and sample data
+- `public/` — Static assets
+
+## Red Flag Surfacing
+
+- **TreeGraph**: If any transaction in a node is flagged (`isFlagged`), a red flag icon (🚩) appears next to the transaction count.
+- **TimeFlow**: If any transaction in a flow is flagged, the flow band is colored red for immediate visual attention.
+
+## Customisation
+
+- Update `src/data.ts` to add or modify accounts and transactions.
+- Adjust chart and UI settings in the `config` object in `src/data.ts`.
+
+## License
+
+MIT
+
+---
+
+_Built with React, Vite, TypeScript, and D3.js for modern, high-performance financial visualisation._
