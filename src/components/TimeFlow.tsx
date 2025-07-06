@@ -466,48 +466,51 @@ const TimeFlow: React.FC<TimeFlowProps> = ({
   }, [transactions, minAmount, maxAmount]);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "16px", position: "relative" }}>
-      <div style={{ position: 'absolute', top: 8, right: 16, zIndex: 3, display: 'flex', gap: 8 }}>
-        <button
-          style={{
-            background: '#f3f4f6',
-            border: '1px solid #d1d5db',
-            borderRadius: 4,
-            padding: '4px 12px',
-            fontSize: 13,
-            color: '#374151',
-            cursor: 'pointer',
-            boxShadow: '0 1px 2px rgba(0,0,0,0.03)'
-          }}
-          onClick={() => {
-            if (onResetView) onResetView();
-          }}
-          title="Reset zoom and pan"
-        >
-          Reset View
-        </button>
+    <div className="chart-page" style={{ display: 'flex', flexDirection: 'column', minHeight: 0, height: '100%' }}>
+      <div className="chart-container" style={{ position: 'relative', flex: '1 1 auto', minHeight: 0 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "16px", position: "relative" }}>
+          <div style={{ position: 'absolute', top: 8, right: 16, zIndex: 3, display: 'flex', gap: 8 }}>
+            <button
+              style={{
+                background: '#f3f4f6',
+                border: '1px solid #d1d5db',
+                borderRadius: 4,
+                padding: '4px 12px',
+                fontSize: 13,
+                color: '#374151',
+                cursor: 'pointer',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.03)'
+              }}
+              onClick={() => {
+                if (onResetView) onResetView();
+              }}
+              title="Reset zoom and pan"
+            >
+              Reset View
+            </button>
+          </div>
+          <div 
+            ref={containerRef}
+            style={{ 
+              width: "100%", 
+              height: "600px", 
+              background: "#f9fafb", 
+              borderRadius: 8, 
+              border: "1px solid #e5e7eb",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              overflow: "hidden",
+              position: "relative"
+            }}
+            onClick={() => setSelectedFlow(null)} // Clear selection when clicking background
+          >
+            <svg ref={svgRef} style={{ cursor: "grab" }} />
+          </div>
+        </div>
       </div>
-      <div 
-        ref={containerRef}
-        style={{ 
-          width: "100%", 
-          height: "600px", 
-          background: "#f9fafb", 
-          borderRadius: 8, 
-          border: "1px solid #e5e7eb",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          overflow: "hidden",
-          position: "relative"
-        }}
-        onClick={() => setSelectedFlow(null)} // Clear selection when clicking background
-      >
-        <svg ref={svgRef} style={{ cursor: "grab" }} />
-      </div>
-      
       {selectedFlow && (
-        <div className="table-section">
+        <div className="table-section" style={{ flex: '0 0 auto' }}>
           <div className="grid-container">
             <div style={{ 
               display: "flex", 

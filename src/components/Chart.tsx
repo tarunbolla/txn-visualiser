@@ -574,62 +574,69 @@ const Chart: React.FC<ChartProps> = ({
 
   // Modal for account reveal
   const showModal = !!pendingAccount;
+  
   return (
-    <div className="chart-container" ref={containerRef} style={{ position: 'relative' }}>
-      {showModal && (
-        <div className="modal-overlay" style={{ position: 'fixed', top:0, left:0, right:0, bottom:0, background:'rgba(0,0,0,0.2)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center' }}>
-          <div className="modal-content" style={{ background:'#fff', borderRadius:8, boxShadow:'0 2px 16px rgba(0,0,0,0.15)', padding:32, minWidth:320 }}>
-            <div style={{ marginBottom: 16, fontSize: 16 }}>
-              Show transactions for <b>{accounts.find(a => a.id === pendingAccount)?.name || pendingAccount}</b>?
-            </div>
-            <div style={{ display:'flex', gap:12, justifyContent:'flex-end' }}>
-              <button onClick={() => setPendingAccount(null)} style={{ padding:'6px 18px', borderRadius:4, border:'1px solid #d1d5db', background:'#f3f4f6', cursor:'pointer' }}>Cancel</button>
-              <button onClick={() => { if (pendingAccount) { onAddActiveAccount(pendingAccount); setPendingAccount(null); } }} style={{ padding:'6px 18px', borderRadius:4, border:'1px solid #2563eb', background:'#2563eb', color:'#fff', cursor:'pointer' }}>Yes</button>
+    <div className="chart-page" style={{ display: 'flex', flexDirection: 'column', minHeight: 0, height: '100%' }}>
+      <div className="chart-container" ref={containerRef} style={{ position: 'relative', flex: '1 1 auto', minHeight: 0 }}>
+        {showModal && (
+          <div className="modal-overlay" style={{ position: 'fixed', top:0, left:0, right:0, bottom:0, background:'rgba(0,0,0,0.2)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center' }}>
+            <div className="modal-content" style={{ background:'#fff', borderRadius:8, boxShadow:'0 2px 16px rgba(0,0,0,0.15)', padding:32, minWidth:320 }}>
+              <div style={{ marginBottom: 16, fontSize: 16 }}>
+                Show transactions for <b>{accounts.find(a => a.id === pendingAccount)?.name || pendingAccount}</b>?
+              </div>
+              <div style={{ display:'flex', gap:12, justifyContent:'flex-end' }}>
+                <button onClick={() => setPendingAccount(null)} style={{ padding:'6px 18px', borderRadius:4, border:'1px solid #d1d5db', background:'#f3f4f6', cursor:'pointer' }}>Cancel</button>
+                <button onClick={() => { if (pendingAccount) { onAddActiveAccount(pendingAccount); setPendingAccount(null); } }} style={{ padding:'6px 18px', borderRadius:4, border:'1px solid #2563eb', background:'#2563eb', color:'#fff', cursor:'pointer' }}>Yes</button>
+              </div>
             </div>
           </div>
+        )}
+        {/* Chart controls top right */}
+        <div style={{ position: 'absolute', top: 8, right: 16, zIndex: 2, display: 'flex', gap: 8 }}>
+          <button
+            style={{
+              background: '#f3f4f6',
+              border: '1px solid #d1d5db',
+              borderRadius: 4,
+              padding: '4px 12px',
+              fontSize: 13,
+              color: '#374151',
+              cursor: 'pointer',
+              boxShadow: '0 1px 2px rgba(0,0,0,0.03)'
+            }}
+            onClick={onResetFlags}
+            title="Clear all transaction flags"
+            disabled={!onResetFlags}
+          >
+            Reset Flags
+          </button>
+          <button
+            style={{
+              background: '#f3f4f6',
+              border: '1px solid #d1d5db',
+              borderRadius: 4,
+              padding: '4px 12px',
+              fontSize: 13,
+              color: '#374151',
+              cursor: 'pointer',
+              boxShadow: '0 1px 2px rgba(0,0,0,0.03)'
+            }}
+            onClick={() => {
+              if (onResetView) {
+                onResetView();
+              }
+            }}
+            title="Reset zoom and pan"
+          >
+            Reset View
+          </button>
         </div>
-      )}
-      {/* Chart controls top right */}
-      <div style={{ position: 'absolute', top: 8, right: 16, zIndex: 2, display: 'flex', gap: 8 }}>
-        <button
-          style={{
-            background: '#f3f4f6',
-            border: '1px solid #d1d5db',
-            borderRadius: 4,
-            padding: '4px 12px',
-            fontSize: 13,
-            color: '#374151',
-            cursor: 'pointer',
-            boxShadow: '0 1px 2px rgba(0,0,0,0.03)'
-          }}
-          onClick={onResetFlags}
-          title="Clear all transaction flags"
-          disabled={!onResetFlags}
-        >
-          Reset Flags
-        </button>
-        <button
-          style={{
-            background: '#f3f4f6',
-            border: '1px solid #d1d5db',
-            borderRadius: 4,
-            padding: '4px 12px',
-            fontSize: 13,
-            color: '#374151',
-            cursor: 'pointer',
-            boxShadow: '0 1px 2px rgba(0,0,0,0.03)'
-          }}
-          onClick={() => {
-            if (onResetView) {
-              onResetView();
-            }
-          }}
-          title="Reset zoom and pan"
-        >
-          Reset View
-        </button>
+        <svg ref={svgRef} />
       </div>
-      <svg ref={svgRef} />
+      {/* Table section placeholder for unified layout (add table here if needed) */}
+      {/* <div className="table-section" style={{ flex: '0 0 auto' }}>
+        <TransactionsTable ... />
+      </div> */}
     </div>
   );
 };

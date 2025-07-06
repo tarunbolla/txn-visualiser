@@ -56,30 +56,56 @@ const DualRangeSlider: React.FC<DualRangeSliderProps> = ({
   }, [isDragging, handleMouseMove, handleMouseUp]);
 
   return (
-    <div className="dual-range-slider">
+    <div className="dual-range-slider" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       <label className="slider-label">{label}</label>
-      <div className="slider-container" ref={sliderRef}>
-        <div className="slider-track">
+      <div className="slider-container" ref={sliderRef} style={{ position: 'relative', width: '100%' }}>
+        <div className="slider-track" style={{ position: 'relative', height: 6, background: '#e5e7eb', borderRadius: 3 }}>
           <div 
             className="slider-range"
             style={{
+              position: 'absolute',
               left: `${getPercentage(value[0])}%`,
-              width: `${getPercentage(value[1]) - getPercentage(value[0])}%`
+              width: `${getPercentage(value[1]) - getPercentage(value[0])}%`,
+              height: 6,
+              background: '#2563eb',
+              borderRadius: 3
             }}
           />
           <div 
             className="slider-thumb slider-thumb-min"
-            style={{ left: `${getPercentage(value[0])}%` }}
+            style={{
+              position: 'absolute',
+              left: `${getPercentage(value[0])}%`,
+              top: -6,
+              width: 18,
+              height: 18,
+              background: '#fff',
+              border: '2px solid #2563eb',
+              borderRadius: '50%',
+              cursor: 'pointer',
+              boxShadow: '0 1px 4px rgba(0,0,0,0.08)'
+            }}
             onMouseDown={() => handleMouseDown('min')}
           />
           <div 
             className="slider-thumb slider-thumb-max"
-            style={{ left: `${getPercentage(value[1])}%` }}
+            style={{
+              position: 'absolute',
+              left: `${getPercentage(value[1])}%`,
+              top: -6,
+              width: 18,
+              height: 18,
+              background: '#fff',
+              border: '2px solid #2563eb',
+              borderRadius: '50%',
+              cursor: 'pointer',
+              boxShadow: '0 1px 4px rgba(0,0,0,0.08)'
+            }}
             onMouseDown={() => handleMouseDown('max')}
           />
         </div>
       </div>
-      <div className="slider-values">
+      <div className="slider-values" style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#374151' }}>
         <span>{formatValue(value[0])}</span>
         <span>{formatValue(value[1])}</span>
       </div>

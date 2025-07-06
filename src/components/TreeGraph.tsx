@@ -580,87 +580,88 @@ const TreeGraph: React.FC<TreeGraphProps> = ({
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "16px", position: "relative" }}>
-      <div style={{ position: 'absolute', top: 8, right: 16, zIndex: 2, display: 'flex', gap: 8 }}>
-        <button
-          style={{
-            background: '#f3f4f6',
-            border: '1px solid #d1d5db',
-            borderRadius: 4,
-            padding: '4px 12px',
-            fontSize: 13,
-            color: '#374151',
-            cursor: 'pointer',
-            boxShadow: '0 1px 2px rgba(0,0,0,0.03)'
-          }}
-          onClick={() => {
-            if (onResetView) onResetView();
-          }}
-          title="Reset zoom and pan"
-        >
-          Reset View
-        </button>
-      </div>
-      <div 
-        ref={containerRef}
-        style={{ 
-          width: "100%", 
-          height: "500px", 
-          background: "#f9fafb", 
-          borderRadius: 8, 
-          border: "1px solid #e5e7eb",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center"
-        }}
-        onClick={() => setSelectedNode(null)} // Clear selection when clicking background
-      >
-        <svg ref={svgRef} style={{ cursor: "grab" }} />
-      </div>
-
-      {/* Context menu */}
-      {contextMenu && (
-        <div
-          style={{
-            position: "fixed",
-            left: contextMenu.x,
-            top: contextMenu.y,
-            background: "white",
-            border: "1px solid #e5e7eb",
-            borderRadius: "6px",
-            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
-            zIndex: 1000,
-            minWidth: "160px",
-            padding: "4px 0"
-          }}
-          onClick={(e) => e.stopPropagation()}
-        >
+    <div className="chart-page" style={{ display: 'flex', flexDirection: 'column', minHeight: 0, height: '100%' }}>
+      <div className="chart-container" style={{ position: 'relative', flex: '1 1 auto', minHeight: 0 }}>
+        <div style={{ position: 'absolute', top: 8, right: 16, zIndex: 2, display: 'flex', gap: 8 }}>
           <button
             style={{
-              width: "100%",
-              padding: "8px 12px",
-              border: "none",
-              background: "transparent",
-              textAlign: "left",
-              cursor: "pointer",
-              fontSize: "14px",
-              color: "#333"
+              background: '#f3f4f6',
+              border: '1px solid #d1d5db',
+              borderRadius: 4,
+              padding: '4px 12px',
+              fontSize: 13,
+              color: '#374151',
+              cursor: 'pointer',
+              boxShadow: '0 1px 2px rgba(0,0,0,0.03)'
             }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "#f3f4f6";
+            onClick={() => {
+              if (onResetView) onResetView();
             }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "transparent";
-            }}
-            onClick={() => handleFocusAccount(contextMenu.accountId)}
+            title="Reset zoom and pan"
           >
-            Re-centre on {contextMenu.accountName}
+            Reset View
           </button>
         </div>
-      )}
-      
+        <div 
+          ref={containerRef}
+          style={{ 
+            width: "100%", 
+            height: "500px", 
+            background: "#f9fafb", 
+            borderRadius: 8, 
+            border: "1px solid #e5e7eb",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center"
+          }}
+          onClick={() => setSelectedNode(null)} // Clear selection when clicking background
+        >
+          <svg ref={svgRef} style={{ cursor: "grab" }} />
+        </div>
+
+        {/* Context menu */}
+        {contextMenu && (
+          <div
+            style={{
+              position: "fixed",
+              left: contextMenu.x,
+              top: contextMenu.y,
+              background: "white",
+              border: "1px solid #e5e7eb",
+              borderRadius: "6px",
+              boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
+              zIndex: 1000,
+              minWidth: "160px",
+              padding: "4px 0"
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              style={{
+                width: "100%",
+                padding: "8px 12px",
+                border: "none",
+                background: "transparent",
+                textAlign: "left",
+                cursor: "pointer",
+                fontSize: "14px",
+                color: "#333"
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "#f3f4f6";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "transparent";
+              }}
+              onClick={() => handleFocusAccount(contextMenu.accountId)}
+            >
+              Re-centre on {contextMenu.accountName}
+            </button>
+          </div>
+        )}
+      </div>
       {selectedNode && (
-        <div className="table-section">
+        <div className="table-section" style={{ flex: '0 0 auto' }}>
           <div className="grid-container">
             <div style={{ 
               display: "flex", 
