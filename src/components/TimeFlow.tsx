@@ -221,16 +221,6 @@ const TimeFlow: React.FC<TimeFlowProps> = ({
       });
     });
     
-    // Create flow width scale based on maximum balance rather than flow amount
-    const maxBalance = Math.max(...Array.from(accountBalances.values()).flat().map(b => Math.abs(b.balance)));
-    const balanceScale = d3.scaleLinear()
-      .domain([0, maxBalance])
-      .range([2, 30]);
-    
-    const flowWidthScale = d3.scaleSqrt()
-      .domain([0, Math.max(...flows.map(f => f.amount))])
-      .range([3, 20]);
-
     // Clear previous content
     g.selectAll("*").remove();
     
@@ -276,7 +266,7 @@ const TimeFlow: React.FC<TimeFlowProps> = ({
       
       balanceHistory.forEach(point => {
         const x = timeScale(point.date);
-        const balanceWidth = Math.max(2, Math.min(30, Math.abs(point.balance) / maxBalance * 30));
+        const balanceWidth = Math.max(2, Math.min(30, Math.abs(point.balance) / Math.max(...Array.from(accountBalances.values()).flat().map(b => Math.abs(b.balance))) * 30));
         sankeyPoints.push({
           x: x,
           y: accountLane.y,
@@ -345,14 +335,14 @@ const TimeFlow: React.FC<TimeFlowProps> = ({
       const destBalance = accountBalances.get(flow.toAccount)?.find(b => b.date.getTime() === flow.date.getTime());
       
       // Calculate actual balance widths to match the account bands exactly
-      const sourceWidth = sourceBalance ? Math.max(2, Math.min(30, Math.abs(sourceBalance.balance) / maxBalance * 30)) : 6;
-      const destWidth = destBalance ? Math.max(2, Math.min(30, Math.abs(destBalance.balance) / maxBalance * 30)) : 6;
+      const sourceWidth = sourceBalance ? Math.max(2, Math.min(30, Math.abs(sourceBalance.balance) / Math.max(...Array.from(accountBalances.values()).flat().map(b => Math.abs(b.balance))) * 30)) : 6;
+      const destWidth = destBalance ? Math.max(2, Math.min(30, Math.abs(destBalance.balance) / Math.max(...Array.from(accountBalances.values()).flat().map(b => Math.abs(b.balance))) * 30)) : 6;
       
       // Create seamless Sankey path that perfectly connects to account band edges
       // This mimics the Observable example's approach for seamless merging
       const curvature = 0.5; // Curvature factor for smooth connections
       const xi = d3.interpolateNumber(x1, x2);
-      const yi = d3.interpolateNumber(y1, y2);
+      // const yi = d3.interpolateNumber(y1, y2);
       
       // Create control points for smooth cubic Bezier curves
       const cp1x = xi(curvature);

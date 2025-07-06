@@ -221,7 +221,7 @@ const Chart: React.FC<ChartProps> = ({
         const id = d as string;
         return activeAccounts.includes(id) ? "default" : "pointer";
       })
-      .on("click", (event, d) => {
+      .on("click", (_event, d) => {
         const id = d as string;
         if (!activeAccounts.includes(id)) {
           setPendingAccount(id);
@@ -240,7 +240,7 @@ const Chart: React.FC<ChartProps> = ({
       // Place C: D: below the last tspan of the label
       const labelText = d3.select(this).select("text");
       const tspans = labelText.selectAll("tspan");
-      const lastTspan = tspans.nodes()[tspans.size() - 1] as SVGTextElement;
+      // const lastTspan = tspans.nodes()[tspans.size() - 1] as SVGTextElement;
       const lastLineCount = tspans.size();
       d3.select(this)
         .append("text")

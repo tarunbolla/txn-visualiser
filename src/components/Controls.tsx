@@ -17,7 +17,7 @@ export interface ControlsProps {
   accountFlows?: Record<string, number>;
 }
 
-const Controls: React.FC<ControlsProps> = ({ filters, onFilterChange, onResetFlags, transactions = [], accountFlows = {} }) => {
+const Controls: React.FC<ControlsProps> = ({ filters, onFilterChange, /* onResetFlags, */ transactions = [], accountFlows = {} }) => {
   // Compute min/max for amount slider
   const [minAmount, maxAmount] = React.useMemo(() => {
     if (!transactions.length) return [0, 10000];
