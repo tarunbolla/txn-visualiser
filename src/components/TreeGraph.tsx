@@ -267,7 +267,7 @@ const TreeGraph: React.FC<TreeGraphProps> = ({
       transactions: Transaction[]
     }> = [];
     const allLinks: Array<{id: string, d: string}> = [];
-    const allTexts: Array<{id: string, x: number, y: number, text: string, anchor: string, fontSize: string, fill: string, fontWeight?: string, flagged?: boolean}> = [];
+    const allTexts: Array<{id: string, x: number, y: number, text: string, anchor: string, fontSize: string, fill: string, fontWeight?: string, flagged?: boolean, accountId?: string}> = [];
 
     // Outgoing (right) subtree - shows where money flows TO from the active account
     if (treeData.children[0]) {
@@ -335,7 +335,8 @@ const TreeGraph: React.FC<TreeGraphProps> = ({
           anchor: "start",
           fontSize: "9px",
           fill: "#666",
-          flagged: d.data.transactions.some(tx => tx.isFlagged) // <-- add flagged property
+          flagged: d.data.transactions.some(tx => tx.isFlagged), // <-- add flagged property
+          accountId: d.data.id // Add accountId to identify unique nodes for flag positioning
         });
       });
     }
@@ -406,7 +407,8 @@ const TreeGraph: React.FC<TreeGraphProps> = ({
           anchor: "end",
           fontSize: "9px",
           fill: "#666",
-          flagged: d.data.transactions.some(tx => tx.isFlagged) // <-- add flagged property
+          flagged: d.data.transactions.some(tx => tx.isFlagged), // <-- add flagged property
+          accountId: d.data.id // Add accountId to identify unique nodes for flag positioning
         });
       });
     }
@@ -434,7 +436,8 @@ const TreeGraph: React.FC<TreeGraphProps> = ({
       fontSize: "12px",
       fill: "#000",
       fontWeight: "bold",
-      flagged: treeData.transactions.some(tx => tx.isFlagged)
+      flagged: treeData.transactions.some(tx => tx.isFlagged),
+      accountId: activeAccount
     });
 
     // Use D3 data joins for smooth updates with stable IDs
@@ -539,11 +542,22 @@ const TreeGraph: React.FC<TreeGraphProps> = ({
       .style("font-size", d => d.fontSize)
       .style("fill", d => d.fill)
       .style("font-weight", d => d.fontWeight || "normal")
-      .text(d => d.text)
-      .each(function(d) {
-        // Add red flag icon if flagged
-        if (d.flagged) {
-          const bbox = (this as SVGTextElement).getBBox();
+      .text(d => d.text);
+
+    // Remove any existing flags before adding new ones
+    g.selectAll("[class*='flag-']").remove();
+
+    // Add flags separately to avoid duplicates
+    // Track which accounts already have flags to prevent duplicates
+    const flaggedAccounts = new Set<string>();
+    
+    texts.each(function(d) {
+      if (d.flagged && d.accountId && !flaggedAccounts.has(d.accountId)) {
+        flaggedAccounts.add(d.accountId);
+        const bbox = (this as SVGTextElement).getBBox();
+        
+        // Position flag based on anchor - for value text elements only
+        if (d.id.includes('-value-')) {
           d3.select(this.parentNode as SVGGElement)
             .append("text")
             .attr("x", d.anchor === "end" ? d.x - bbox.width - 16 : d.x + bbox.width + 6)
@@ -552,9 +566,11 @@ const TreeGraph: React.FC<TreeGraphProps> = ({
             .attr("alignment-baseline", "middle")
             .style("font-size", "13px")
             .style("fill", "#e11d48")
-            .text("\u2691"); // Unicode triangular flag
+            .text("\u2691") // Unicode triangular flag
+            .attr("class", `flag-${d.accountId}`); // Add class for easier identification
         }
-      });
+      }
+    });
     
     texts.exit().remove();
   }, [transactions, minAmount, maxAmount, selectedNode, activeAccount]); // Add selectedNode to update highlighting
