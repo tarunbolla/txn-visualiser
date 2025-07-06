@@ -1,9 +1,9 @@
 {
-  "name": "txn-visualiser-react",
+  "name": "txn-visualiser",
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "https://tarunbolla.github.io/txn-visualiser-react/",
+  "homepage": "https://tarunbolla.github.io/txn-visualiser/",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
